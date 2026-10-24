@@ -5,6 +5,7 @@ namespace e4 {
 // Snapshot notes on press so changing the root cannot change a later release.
 class ChordPads {
 public:
+    explicit ChordPads(int firstSource = source::firstPad) : ownerBase(firstSource) {}
     const PerformanceSettings& getSettings() const noexcept { return settings; }
     template <typename Send> bool replace(const PerformanceSettings& next, Send&& send) {
         if (!next.valid()) return false;
@@ -41,10 +42,10 @@ public:
             if (!voicing(settings.pads[static_cast<std::size_t>(pad)],root,candidate)) return;
             notes=candidate;
             for (int note : notes)
-                if (note >= 0) send(MidiEvent{0x90,note,100},pad + source::firstPad);
+                if (note >= 0) send(MidiEvent{0x90,note,100},pad + ownerBase);
         } else {
             for (int& note : notes) {
-                if (note >= 0) send(MidiEvent{0x80,note,0},pad + source::firstPad);
+                if (note >= 0) send(MidiEvent{0x80,note,0},pad + ownerBase);
                 note = -1;
             }
         }
@@ -53,6 +54,7 @@ public:
         for (int pad = 0; pad < source::padCount; ++pad) setHeld(pad,false,0,send);
     }
 private:
+    int ownerBase;
     PerformanceSettings settings {};
     std::array<std::array<int,4>,4> held {{
         {{-1,-1,-1,-1}}, {{-1,-1,-1,-1}}, {{-1,-1,-1,-1}}, {{-1,-1,-1,-1}}

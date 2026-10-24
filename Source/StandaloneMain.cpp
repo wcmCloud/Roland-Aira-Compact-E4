@@ -7,6 +7,7 @@
 #include "InputNoteState.h"
 #include "ChordBankEditor.h"
 #include "ScaleControls.h"
+#include "ControllerEditor.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
@@ -163,6 +164,7 @@ public:
         e4::PerformanceSettings savedBank;
         if (e4::ui::parseBank(settings->getValue("chordBank"),savedBank))
             chords.replace(savedBank,[](e4::MidiEvent,int) {});
+        mappedChords.replace(chords.getSettings(),[](e4::MidiEvent,int) {});
         updatePadNames();
         bankButton.setButtonText("Edit / load chord bank...");
         bankButton.onClick=[this] {
@@ -172,9 +174,22 @@ public:
                 if (!safe) return;
                 safe->releasePads();
                 safe->chords.replace(bank,[safe](e4::MidiEvent event,int source) { if (safe) safe->session.process(event,source); });
+                safe->mappedChords.replace(bank,[safe](e4::MidiEvent event,int source) { if (safe) safe->session.process(event,source); });
                 safe->updatePadNames();
             },scaleControls.settings());
         };
+        e4::ControllerProfile savedProfile;
+        if (e4::ui::parseProfile(settings->getValue("controllerProfile"),savedProfile)) controllers.exchange.publish(savedProfile);
+        mappingButton.setButtonText("MIDI learn...");
+        mappingButton.onClick=[this] {
+            if (mappingWindow) { mappingWindow->toFront(true);return; }
+            auto safe=juce::Component::SafePointer<Companion>(this);
+            mappingWindow=e4::ui::openControllerEditor(controllers.exchange.get(),
+                [safe](e4::ControllerProfile profile) { return safe && safe->controllers.exchange.publish(profile); },
+                [safe](int slot) { if (safe) safe->controllers.requestLearn(slot); },
+                [safe] { return safe ? safe->controllers.learned.exchange(0) : 0; });
+        };
+        addAndMakeVisible(mappingButton);
         addAndMakeVisible(bankButton);
         addAndMakeVisible(rootLabel); addAndMakeVisible(root);
         e4::ui::keyboardStyle(keyboard);
@@ -213,10 +228,12 @@ public:
         setSize(1040,850);
     }
     ~Companion() override {
+        if (mappingWindow) delete mappingWindow.getComponent();
         if (bankWindow) delete bankWindow.getComponent();
         stopTimer();
         if (previewMode) { keys.removeListener(this); setLookAndFeel(nullptr); return; }
         auto* settings = preferences.getUserSettings();
+        settings->setValue("controllerProfile",e4::ui::profileText(controllers.exchange.get()));
         const auto savedScale=scaleControls.settings();
         settings->setValue("scaleMode",savedScale.mode); settings->setValue("scaleTonic",savedScale.tonic);
         settings->setValue("scaleType",savedScale.type); settings->setValue("scalePads",savedScale.pads);
@@ -245,6 +262,7 @@ public:
         place(clockState,44,584,230,62);
         place(help,334,146,658,28);
         place(channelLabel,334,187,160,18); place(channel,334,211,160,36);
+        place(mappingButton,866,211,126,36);
         place(rootLabel,514,187,160,18); place(root,514,211,160,36);
         place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
         place(scaleControls,334,326,658,52);
@@ -358,9 +376,13 @@ private:
     }
     void clearPending() { const juce::ScopedLock lock(queueLock); queue.clear(); }
     void releasePads() {
+        mappedChords.releaseAll([this](e4::MidiEvent event,int source) { session.process(event,source); });
         chords.releaseAll([this](e4::MidiEvent event,int source) { session.process(event,source); });
     }
-    void resetKeyboard() { releasePads(); keys.allNotesOff(0); inputNotes.clear(); keyboard.showIncoming(0,0); }
+    void resetKeyboard() {
+        controllers.router.reset([this](e4::MappingAction action) { if (action.action<=e4::ControllerBinding::pad4) mappedChords.setHeld(action.action,false,0,[this](e4::MidiEvent event,int source) { session.process(event,source); }); });
+        controllers.router.learn(-1);
+        releasePads(); keys.allNotesOff(0); inputNotes.clear(); keyboard.showIncoming(0,0); }
     void handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message) override {
         if (message.getRawDataSize() != 3) return;
         const auto* data = message.getRawData();
@@ -373,6 +395,17 @@ private:
     void handleNoteOff(juce::MidiKeyboardState*,int channelNumber,int note,float) override {
         session.process({0x80 | (channelNumber-1),note,0},1);
     }
+    void handleMappedAction(e4::MappingAction action) {
+        const auto send=[this](e4::MidiEvent event,int source) { session.process(event,source); };
+        if (action.action<=e4::ControllerBinding::pad4) mappedChords.setHeld(action.action,action.value!=0,static_cast<int>(root.getValue()),send);
+        else if (action.action==e4::ControllerBinding::bend) session.process({0xe0,action.value&127,(action.value>>7)&127},e4::source::firstMappedPad);
+        else if (action.action==e4::ControllerBinding::transpose) transpose.setValue(action.value);
+        else if (action.action>=e4::ControllerBinding::inversion1 && action.action<=e4::ControllerBinding::inversion4) {
+            auto bank=chords.getSettings();auto& pad=bank.pads[static_cast<std::size_t>(action.action-e4::ControllerBinding::inversion1)];
+            const int next=juce::jlimit(0,pad.noteCount-1,action.value);
+            if (pad.inversion!=next) { pad.inversion=next;chords.replace(bank,send);mappedChords.replace(bank,send);updatePadNames(); }
+        }
+    }
     void timerCallback() override {
         const double now = juce::Time::getMillisecondCounterHiRes();
         if (now - lastTick > 2000.0)
@@ -382,13 +415,19 @@ private:
         std::size_t count = 0;
         bool healthy;
         { const juce::ScopedLock lock(queueLock); healthy = queue.drain(pending,count); }
+        if (controllers.update()) controllers.apply([this](e4::MappingAction action) { handleMappedAction(action); });
         if (!healthy) {
             resetKeyboard(); session.panic();
             status.setText("MIDI input overflow: notes released. Reduce input traffic.",juce::dontSendNotification);
         } else {
             for (std::size_t i = 0; i < count; ++i) {
-                session.process(pending[i]);
                 inputNotes.process(pending[i].status,pending[i].first,pending[i].second);
+                bool mappingPanic=false;
+                const bool consumed=controllers.router.process(pending[i],[this,&mappingPanic](e4::MappingAction action) {
+                    if (action.action==e4::ControllerBinding::panic) mappingPanic=mappingPanic || action.value!=0;
+                    else handleMappedAction(action);
+                },controllers.learned);
+                if (mappingPanic) stopTransport();else if (!consumed) session.process(pending[i]);
             }
             keyboard.showIncoming(inputNotes.low(),inputNotes.high());
         }
@@ -419,6 +458,8 @@ private:
     juce::ApplicationProperties preferences;
     e4::MidiSession session;
     e4::ChordPads chords;
+    e4::ChordPads mappedChords {e4::source::firstMappedPad};
+    e4::ControllerService controllers;
     e4::MidiEventQueue queue;
     juce::CriticalSection queueLock;
     std::unique_ptr<PortSink> sink;
@@ -439,8 +480,8 @@ private:
     e4::ui::VoiceDisplay voiceDisplay;
     juce::TooltipWindow tooltips {this,600};
     std::array<juce::TextButton,4> pads;
-    juce::TextButton connect,disconnect,refresh,panic,bankButton;
-    juce::Component::SafePointer<juce::DialogWindow> bankWindow;
+    juce::TextButton connect,disconnect,refresh,panic,bankButton,mappingButton;
+    juce::Component::SafePointer<juce::DialogWindow> bankWindow,mappingWindow;
     int polls = 0;
     double lastTick = juce::Time::getMillisecondCounterHiRes();
 };

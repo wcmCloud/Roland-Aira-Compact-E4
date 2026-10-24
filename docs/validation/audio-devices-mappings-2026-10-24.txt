@@ -1,0 +1,49 @@
+Audio:
+
+    Devices:
+
+        DELL UP2716D:
+
+          Manufacturer: DEL
+          Output Channels: 2
+          Current SampleRate: 48000
+          Transport: DisplayPort
+          Output Source: Default
+
+        X-iPhone Microphone:
+
+          Input Channels: 1
+          Manufacturer: Apple Inc.
+          Current SampleRate: 48000
+          Transport: Unknown
+          Input Source: Default
+
+        E-4:
+
+          Input Channels: 2
+          Manufacturer: Roland
+          Output Channels: 2
+          Current SampleRate: 44100
+          Transport: USB
+          Input Source: Default
+          Output Source: Default
+
+        MacBook Air Microphone:
+
+          Default Input Device: Yes
+          Input Channels: 1
+          Manufacturer: Apple Inc.
+          Current SampleRate: 48000
+          Transport: Built-in
+          Input Source: MacBook Air Microphone
+
+        MacBook Air Speakers:
+
+          Default Output Device: Yes
+          Default System Output Device: Yes
+          Manufacturer: Apple Inc.
+          Output Channels: 2
+          Current SampleRate: 44100
+          Transport: Built-in
+          Output Source: MacBook Air Speakers
+

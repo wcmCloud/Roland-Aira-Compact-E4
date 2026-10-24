@@ -1,6 +1,17 @@
 # E-4 Companion — implementation plan
 
 
+### Performance expansion: P5 controller mappings / verification (24 October 2026)
+
+- Implemented shared eight-slot note/CC routing and capture-only MIDI learn, per-channel/omni inputs, note Consume/pass-through, conflict rejection, momentary pads/Panic, CC transpose/inversion and 14-bit bend with centre/deadband. Added staged .e4map profile load/save and explicit Apply. Arp/sequencer/latch remain deferred.
+- Controller pads use independent stable sources 8–11, preserving screen/input ownership and the reserved generator IDs. Cleanup retires held trigger actions while retaining original release consumption; repeated captured CC values cannot fire after Apply, and held CC buttons must release after cleanup.
+- Audio mapping runs at input sample offsets with bounded state and no device/file access, locks or host notifications. Non-real-time profile writers use the shared atomic snapshot exchange. Changed host parameter values take block-level priority over mapped transpose/inversion overrides; effective values are displayed and serialized.
+- Plug-in schema 6 embeds the profile and effective control values, migrating schemas 1–5 with mappings disabled. Standalone stores its applied default profile and actual control values on normal exit.
+- Added a mapping test suite and processor regressions for capture/no-trigger, conflict and malformed input rejection, repeats/channels, profile edits while held, hysteresis, bend endpoints, parameter precedence, file/state migration and screen/mapped pad overlaps. Actual VST3 software-host fixture adds mapped note timing, trigger consumption and CC delivery checks (31 total).
+- Installed the development VST3 in the user plug-in folder and scanned/loaded it in Live 12.4.7 Lite. Configured and saved docs/ableton/E4 Companion Routing Project/E4 Companion Routing.als with plug-in MIDI output → E-4 channel 3, confirmed by inspecting the saved set. A short computer-keyboard note showed Live input/output traffic.
+- E-4 MIDI endpoints and USB audio metadata are present. Live repeatedly reports Selected audio device is not available for the E-4 input, including after a 44.1 kHz retry. Restored the working Mac input/system output; audio return stays Monitor Off. Audible voice, physical-controller CC delivery, four-voice/bend recording and full hardware acceptance remain pending; see docs/ableton/README.md.
+
+
 ### Performance expansion: P2 key/scale tools (24 October 2026)
 
 - Added shared MIDI scale transform with Off/Reject/Nearest, twelve tonics, Chromatic/Major/Natural minor/Major pentatonic/Minor pentatonic, lower-note nearest ties and optional pad inclusion. Both interfaces expose the same controls.

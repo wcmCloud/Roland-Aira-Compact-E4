@@ -1,0 +1,32 @@
+{
+  "inputs": [
+    {
+      "name": "E-4 MIDI OUT",
+      "identifier": "-1077717522 -438380194"
+    },
+    {
+      "name": "Akai Network - DAW Control",
+      "identifier": "621768014"
+    },
+    {
+      "name": "Akai Network - MIDI",
+      "identifier": "-484331683"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "E-4 MIDI IN",
+      "identifier": "-1077717522 306739955"
+    },
+    {
+      "name": "Akai Network - DAW Control",
+      "identifier": "946528464"
+    },
+    {
+      "name": "Akai Network - MIDI",
+      "identifier": "-451211578"
+    }
+  ],
+  "mode": "list-only: no ports opened and no messages sent",
+  "note": "Empty arrays can mean CoreMIDI access is restricted; verify in a normal Terminal before assuming no devices are connected."
+}

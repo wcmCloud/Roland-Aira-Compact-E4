@@ -9,7 +9,8 @@ namespace e4 {
 namespace source {
 inline constexpr int input = 0, keyboard = 1, firstPad = 2, padCount = 4;
 inline constexpr int arpeggiator = firstPad + padCount, sequencer = arpeggiator + 1;
-inline constexpr int count = sequencer + 1;
+inline constexpr int firstMappedPad = sequencer + 1;
+inline constexpr int count = firstMappedPad + padCount;
 }
 struct ChordDefinition {
     std::array<char, 25> name {};

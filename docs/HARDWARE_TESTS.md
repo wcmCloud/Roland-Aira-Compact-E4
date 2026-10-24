@@ -77,3 +77,14 @@ Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passe
 3. Change key/mode/type/pad inclusion with held notes; all old output notes must release without replay. Check Panic, editor close, bypass, port changes and reconnect for stranded notes.
 4. Check boundary notes 0/127, nearest ties, and scale then transpose ordering. Save/reopen standalone and a Live project; verify scale recall. Open an older project: scale processing must default Off.
 5. In Live, automate scale mode/key/type/inclusion and record MIDI plus E-4 audio. Confirm timing and release behaviour. Reopen the chord-bank editor after scale changes to refresh its preview snapshot.
+
+## Controller mapping acceptance
+
+1. Open MIDI learn, select an Off row, press a note or move a CC. Capture must not sound notes or change the current action. Choose an action, Apply, release the trigger and use a fresh gesture. Cancel and malformed/conflicting imports must preserve the active profile.
+2. Hold a mapped pad and its matching screen pad. Releasing either must preserve the other. Include matching direct input and overlapping MIDI channels/repeated holds. Edit the profile/bank while held; old releases must not cut new owners or fire replacement actions.
+3. Test CC button values 0/79/80/127/64/48/0; repeated highs must not retrigger and release must occur at 48. Panic should release mapped notes, centre bend and require a fresh gesture.
+4. Test transpose CC endpoints (-24/+24), each inversion, bend endpoints/centre/deadband and profile save/load. In Live, change a host parameter in the same block as a controller event: changed host values should win. No CC may reach the E-4 output.
+5. Save/reopen the host set without external profile files, restart standalone, and open an older project. New settings must persist without replay; old projects must have mappings Off.
+6. Verify a real controller with Track input enabled in Live. If a control is reserved by a control-surface script, document it and test the host MIDI Map alternative for numeric parameters. Verify disconnect, stop/bypass, editor close, sleep/wake and overload.
+
+Current Live routing and audio-device observations are recorded in docs/ableton/README.md. A selected device or moving software MIDI indicator does not prove audible E-4 operation.

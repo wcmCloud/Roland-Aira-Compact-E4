@@ -27,7 +27,7 @@ First implementation of the shared MIDI engine and plug-in interface:
 - Filters unsupported messages without discarding valid releases in the same block. Incoming clock/transport bytes are deliberately dropped: use Live's port Sync in plug-in workflows. Standalone has an optional internal clock master.
 - Panic sends explicit Note Offs for owned notes and centres bend. Channel changes, host stop transitions, state restore and bypass also clean up owned notes.
 - Transposes notes by −24 to +24 semitones; out-of-range notes are rejected rather than clamped. Changing transpose releases held output pitches and centres bend before new notes are accepted.
-- Saves channel, chord root, transpose, the active chord bank and pad inversion/octave automation as schema-5 plug-in state; schemas 1–3 migrate to factory pads, zero pad inversion/octave and, where needed, default root/transpose. Held notes are never restored.
+- Saves channel, chord root, transpose, the active chord bank and pad inversion/octave automation as schema-6 plug-in state; schemas 1–3 migrate to factory pads, zero pad inversion/octave and, where needed, default root/transpose. Held notes are never restored.
 - Bounds incoming work to 2048 events per block, then releases owned notes and drops the remainder.
 
 The plug-in emits silent audio; record the physical E-4 audio separately. Enable VOCODER, KEY IN and HARMONY on the hardware. VST3 host routing is the first supported design path, pending hardware testing. The dedicated standalone app now provides direct MIDI port management. The AU output workflow remains experimental: Ableton does not expose AU direct MIDI output.
@@ -112,7 +112,7 @@ Prerequisites: Xcode command line tools, CMake 3.22+ and a JUCE checkout. These 
 ```sh
 cd "/Users/chris/Documents/GitHub/Aira E4"
 cmake -S . -B build -G Xcode -DJUCE_SOURCE_DIR="/absolute/path/to/JUCE"
-cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests e4_output_tests e4_vst3_check
+cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests e4_mapping_tests e4_output_tests e4_vst3_check
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
@@ -169,9 +169,9 @@ Chord banks are now editable in both interfaces. Click **Edit / load chord bank.
 
 Applying a bank releases existing pad notes and waits for a fresh press; external/screen-key notes retain their separate ownership. Chords outside MIDI 0–127 stay silent as a whole. Pads share the four-voice budget with other input. Inversions repeatedly move the lowest voice above the highest; octave-doubled custom intervals retain distinct pitches.
 
-Standalone remembers the active bank when closed normally. Plug-in schema 5 embeds the complete bank in the host project; no external bank file is needed to reopen it. Each pad exposes **inversion** and **octave** host parameters; inversion automation above the available chord voices clamps to the highest valid inversion. Changing these parameters releases pad notes without automatically replaying them. Existing channel/root/transpose parameter IDs are preserved. Factory migration does not replay held notes.
+Standalone remembers the active bank when closed normally. Plug-in schema 6 embeds the complete bank in the host project; no external bank file is needed to reopen it. Each pad exposes **inversion** and **octave** host parameters; inversion automation above the available chord voices clamps to the highest valid inversion. Changing these parameters releases pad notes without automatically replaying them. Existing channel/root/transpose parameter IDs are preserved. Factory migration does not replay held notes.
 
-Names currently use printable ASCII (24 characters maximum); banks contain app settings, not E-4 hardware presets. Arpeggiator and sequencer are deferred for later. Controller mappings/MIDI learn and routing/hardware acceptance are the next priorities. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
+Names currently use printable ASCII (24 characters maximum); banks contain app settings, not E-4 hardware presets. Arpeggiator and sequencer are deferred for later. Controller mappings/MIDI learn are implemented; hardware and Live acceptance are tracked below. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
 
 ## Key and scale filtering
 
@@ -185,4 +185,20 @@ Choose any of the twelve keys and Chromatic, Major, Natural minor, Major pentato
 
 Scale processing occurs before global transpose. For example, C#4 snaps down to C4 in C major, then transpose +1 sends C#4. Multiple input notes that land on one output pitch share ownership: releasing one cannot cut another. Changing mode, tonic, scale or pad inclusion releases held notes and waits for fresh presses. It does not change the E-4's physical AUTO PITCH/key settings.
 
-Standalone remembers scale settings on normal exit; plug-in schema 5 stores and automates them in the host project. Schemas 1–4 migrate with scale processing Off. `.e4bank` files continue to store chord definitions only; loading a bank leaves the current scale unchanged. Hardware and Ableton acceptance remain separate from automated software checks.
+Standalone remembers scale settings on normal exit; plug-in schema 6 stores and automates them in the host project. Schemas 1–4 migrate with scale processing Off. `.e4bank` files continue to store chord definitions only; loading a bank leaves the current scale unchanged. Hardware and Ableton acceptance remain separate from automated software checks.
+
+## Controller mappings and MIDI learn
+
+Click **MIDI learn...** in either interface. The eight slots start Off. Press a slot's **Learn**, move a control or press a note, choose its action and **Apply mappings**. Learning only captures the input; it never performs the assigned action. Release note/button triggers and use a fresh gesture after applying. Continuous CC controls must move to a different value from the captured value. Cancel learn leaves the active profile unchanged.
+
+- Notes or CCs can trigger four momentary pads or Panic. CCs can also set transpose (-24..+24), any pad's inversion (0..3, clamped to its voice count), or pitch bend. Generator/latch actions remain deferred.
+- Select a specific input channel or Any. Each active action has one binding; duplicate targets or overlapping input assignments are rejected.
+- **Consume** prevents a mapped note also playing directly. Unchecking it allows both the pad and original note, within the shared four-voice limit. Panic always suppresses its triggering event. CCs remain local and are never forwarded to the E-4.
+- CC buttons press at 80 or above and release at 48 or below. Intermediate/repeated values cannot repeatedly retrigger. Bend has a configurable centre/deadband; calibration must leave a usable range on both sides. Panic centres bend.
+- **Load/Save profile...** uses .e4map files. Imports stage edits for review; Apply activates them. Standalone remembers its applied profile on normal exit; plug-in schema 6 embeds it in the host project. Schemas 1–5 migrate with mappings disabled. .e4bank remains chord-only.
+
+Controller pads have separate note ownership from the screen pads and live keyboard. Profile/bank changes release old mapped pads without replay; outstanding consumed note releases retain their old policy until drained. Panic/stop/bypass/disconnect clear mapped performance and learn. Closing the editor cancels learn and releases screen-owned notes; host-input mapped notes keep their ownership until release or a processing cleanup event.
+
+In the plug-in, mapped transpose/inversion values are processing-thread overrides, shown in the UI and saved with the project. They do not call host-notification APIs from the audio thread. A changed host parameter value takes priority for that processing block and replaces the corresponding override; unchanged host values allow subsequent controller changes. This is block-level precedence, not sample-accurate host automation.
+
+The built VST3 passes mapped pad timing/consumption and CC20 delivery in a JUCE software host. Live may reserve controls for its control-surface/Remote mappings; physical keyboard CC delivery in Live still needs verification. Use Live's MIDI Map mode for exposed host parameters if a CC does not reach the plug-in. See [the saved Live set and routing notes](docs/ableton/README.md), including the unresolved E-4 USB audio input issue.

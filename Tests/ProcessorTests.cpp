@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PerformanceKeyboard.h"
 #include "ChordBankEditor.h"
+#include "ControllerEditor.h"
 #include <iostream>
 int main() {
     juce::ScopedJuceInitialiser_GUI initialiser;
@@ -306,6 +307,47 @@ int main() {
     if (auto xml=badScaleState.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,scaleState);
     scaleRestored.setStateInformation(scaleState.getData(),static_cast<int>(scaleState.getSize()));
     check(scaleRestored.scaleSettings()==e4::ScaleSettings{},"invalid scale state rejected without changing current settings");
+    E4Processor mappingProcessor;mappingProcessor.prepareToPlay(48000,128);
+    midi.clear();mappingProcessor.processBlock(audio,midi);
+    e4::ControllerProfile controllerProfile;
+    controllerProfile.bindings[0]={e4::ControllerBinding::note,1,48,e4::ControllerBinding::pad1,true,64,2};
+    controllerProfile.bindings[1]={e4::ControllerBinding::cc,1,20,e4::ControllerBinding::transpose,true,64,2};
+    mappingProcessor.controllers.exchange.publish(controllerProfile);midi.clear();mappingProcessor.processBlock(audio,midi);
+    mappingProcessor.controllers.requestLearn(0);
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOn(1,48,static_cast<juce::uint8>(100)),8);mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.activeVoices()==0 && mappingProcessor.controllers.learned.exchange(0)>0,"processor learn captures without playing mapped pad or raw trigger");
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOff(1,48),0);mappingProcessor.processBlock(audio,midi);
+    mappingProcessor.postPerformance({e4::PerformanceCommand::padDown,0,100});
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOn(1,48,static_cast<juce::uint8>(100)),12);mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.activeVoices()==3,"UI and mapped pad share physical pitches without duplicate voices");
+    mappingProcessor.postPerformance({e4::PerformanceCommand::padUp,0,0});midi.clear();mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.activeVoices()==3,"screen pad release preserves mapped controller pad owner");
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOff(1,48),40);mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.activeVoices()==0,"mapped pad note-off releases final owner");
+    midi.clear();midi.addEvent(juce::MidiMessage::controllerEvent(1,20,127),5);mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.effectiveValue(0)==24,"controller CC changes effective transpose");
+    for (const auto event : midi) check(!event.getMessage().isController(),"mapping CC is never forwarded");
+    auto* hostTranspose=mappingProcessor.parameters.getParameter("transpose");hostTranspose->setValueNotifyingHost(hostTranspose->convertTo0to1(5));
+    midi.clear();midi.addEvent(juce::MidiMessage::controllerEvent(1,20,0),5);mappingProcessor.processBlock(audio,midi);
+    check(mappingProcessor.effectiveValue(0)==5,"host transpose change wins controller change in same block");
+    juce::MemoryBlock mappingState;mappingProcessor.getStateInformation(mappingState);
+    E4Processor restoredMappings;restoredMappings.setStateInformation(mappingState.getData(),static_cast<int>(mappingState.getSize()));
+    check(restoredMappings.controllers.exchange.get().bindings[0].number==48 && restoredMappings.effectiveValue(0)==5,"profile and effective mapped values persist in project");
+    auto brokenMappings=mappingProcessor.parameters.copyState();brokenMappings.setProperty("schema",6,nullptr);
+    brokenMappings.setProperty("chordBank",e4::ui::bankText(mappingProcessor.chordBank()),nullptr);brokenMappings.setProperty("controllerProfile","invalid",nullptr);
+    if (auto xml=brokenMappings.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,mappingState);
+    restoredMappings.setStateInformation(mappingState.getData(),static_cast<int>(mappingState.getSize()));
+    check(restoredMappings.controllers.exchange.get().bindings[0].number==48,"invalid profile state leaves current mappings intact");
+    auto oldMappings=mappingProcessor.parameters.copyState();oldMappings.setProperty("schema",5,nullptr);oldMappings.setProperty("chordBank",e4::ui::bankText(mappingProcessor.chordBank()),nullptr);
+    if (auto xml=oldMappings.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,mappingState);
+    restoredMappings.setStateInformation(mappingState.getData(),static_cast<int>(mappingState.getSize()));
+    check(restoredMappings.controllers.exchange.get().bindings[0].kind==0,"older projects migrate with mappings disabled");
+    const auto profileFile=juce::File::getCurrentWorkingDirectory().getNonexistentChildFile("e4-profile-test",".e4map");
+    e4::ControllerProfile fileProfile;
+    check(profileFile.replaceWithText(e4::ui::profileText(controllerProfile))
+        && e4::ui::parseProfile(profileFile.loadFileAsString().trim(),fileProfile)
+        && fileProfile.bindings[1].action==e4::ControllerBinding::transpose,"controller profile file round-trip");
+    profileFile.deleteFile();
     std::cout << "Processor integration: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

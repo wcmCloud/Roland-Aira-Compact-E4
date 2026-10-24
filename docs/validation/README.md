@@ -31,3 +31,34 @@ These checks use fake output endpoints. They establish software ordering and fai
 ## Scale feature validation
 
 The scale milestone passes all seven CTest checks and the core suite under AddressSanitizer/UndefinedBehaviorSanitizer. Exhaustive key/scale/mode tests use an independent degree-list oracle across MIDI 0–127. Ownership regressions cover collision releases, repeated/channel holds, pad opt-in, scale changes and transpose order. The actual VST3 wrapper passes 28 checks, including scale automation, mapped note/release sample offsets, reject mode and state recall; see [the scale wrapper report](vst3-scales-2026-10-24.json). No hardware MIDI output or audio device was opened by these checks; Live and physical E-4 acceptance remain open.
+
+## Controller mappings and current Live/hardware checks
+
+Eight CTest suites pass, including the new controller-router suite. Mapping and
+core suites pass AddressSanitizer/UndefinedBehaviorSanitizer; the shared exchange
+concurrency regression also passes ThreadSanitizer. The actual VST3 passes 31
+checks, adding controller-profile state loading, consumed pad trigger/release
+sample offsets and CC20-to-transpose delivery in a JUCE host. See
+[vst3-mappings-2026-10-24.json](vst3-mappings-2026-10-24.json).
+
+The development VST3 is installed in the user VST3 folder. Live 12.4.7 Lite
+scanned/loaded it; a generated-MIDI send was configured to E-4 channel 3 and
+saved as the project-local routing set. After installing the final build, Live
+was restarted and the saved route reopened successfully. Software MIDI traffic
+was seen for a short computer-keyboard note; audible hardware receipt is not
+confirmed. See [the Live routing record](../ableton/README.md).
+
+E-4 MIDI endpoints are present in
+[midi-ports-mappings-2026-10-24.json](midi-ports-mappings-2026-10-24.json).
+A fresh five-second receive-only capture is saved in
+[e4-receive-mappings-2026-10-24.json](e4-receive-mappings-2026-10-24.json);
+its timing is callback arrival timing, not outgoing jitter or an audio result.
+The Mac reports a two-input/two-output USB E-4 audio device at 44.1 kHz in
+[audio-devices-mappings-2026-10-24.txt](audio-devices-mappings-2026-10-24.txt).
+Live repeatedly failed to open that audio input with “Selected audio device is
+not available,” so audio return remains unverified, not passed. Its input was
+restored to the working Mac microphone and system output, and the return track
+remains Monitor Off. No microphone recording was captured.
+
+Physical-controller learn/CC receipt in Live, audible four-voice/bend playback,
+Panic/stop/hotplug/sleep on hardware and AU output acceptance remain open.

@@ -1,0 +1,1458 @@
+{
+  "mode": "receive-only",
+  "inputIdentifier": "-1077717522 -438380194",
+  "durationSeconds": 5.004879458427429,
+  "messages": 239,
+  "noteOns": 0,
+  "noteOffs": 0,
+  "pitchBends": 0,
+  "clockPulses": 239,
+  "starts": 0,
+  "stops": 0,
+  "validClockIntervals": 238,
+  "nonpositiveClockIntervals": 0,
+  "clockMeanIntervalMs": 20.873099090061896,
+  "clockMinIntervalMs": 19.919874845072627,
+  "clockMaxIntervalMs": 21.165375132113695,
+  "clockIntervalStddevMs": 0.338529201209272,
+  "estimatedBpm": 119.771385610405147,
+  "timingBasis": "local callback arrival times; batching and OS scheduling affect results",
+  "hardwareValidated": false,
+  "shortMessagePreview": [
+    {
+      "arrivalSeconds": 1.206158884126666e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206158904988375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206158926096917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206158947028917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206158968138833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206158988127166e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20615900898925e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159030147667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159051024083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159072071958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159093064875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159114069083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20615913501525e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20615915504425e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159176103917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159196984083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159218147417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159239001417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159260140083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159281030333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159302081625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159322083417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159343019417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159364093083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159384987083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159406133958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159427046958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159448076667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159468998875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159488991417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159510086042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159530971583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159552073833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159572999333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061595941255e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159615003542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159636135e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159656054875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159676969625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159698043542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159719008708e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159740174083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159761057917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159781979542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159803058875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159823042875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159844018833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20615986504575e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159886015375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159907001333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159928049292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159949031458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20615997003175e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206159990041083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061600109865e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160032040167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160052980958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160073998417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160094991666e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160115962958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160136981792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160157010291e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160178029042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160198994125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160220042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160241007e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160261998292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160282985083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160303968625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160324027375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616034496975e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160366021167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160386970042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160408005667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160429004875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061604500285e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160471015875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160490944375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160512037708e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160533002e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160554028792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160574957375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616059595275e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160617014542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160638055292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160658042542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160678980458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160700046542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160720968792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160742016125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160762975458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160784009542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160804968875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160824986e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160846021208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160867033208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160888030791e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160908981833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160929997667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160951008542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160971966833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206160991976792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161013026292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061610339945e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161054958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161075952083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161096962792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161118012833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161138959167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161158978083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161180010417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161200954792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616122199275e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161242965542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161264039458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161285017417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161305999208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161325984583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161346958458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161368022e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161388950208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161409975792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161431000583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161451954375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161473023625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161493009208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161513969292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161534948333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616155599875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161576972375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161598025542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161619001208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161639978125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616165995825e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161680943083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161701967e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161722954042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161744041292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161764967083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161785955625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161806960458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161826956917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161848015833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161868958666e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161889966708e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161910956417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061619319435e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161953024125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161973956875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206161994003625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162014953292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162035993167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162057003667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162077971875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162099004958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061621199745e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162141013625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162160964333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162182000167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162202953083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162223957542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616224493775e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162265967792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616228699675e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162307957042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162327943917e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162348940833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162370024792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616239094825e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162411966125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162432949958e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616245393975e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162474953208e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162494951375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162515929458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162536954292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616255794575e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162578990167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162599947458e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162621005833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162641982333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162661936583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162683005542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162703938417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162724978833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162745951042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162766963333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162787947875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162808950542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162828966667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616284993825e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162870927e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162891938542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616291299475e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162933937333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162954993833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162975976417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206162995974791e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163016978667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163037991417e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163058924625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616307993825e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163100931375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163121996167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163142986041e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163162977583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163183979667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163204939875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163225989875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163246976916e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163267952292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061632889305e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163309935583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163329947708e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163350925333e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163371983375e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163392982083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163413980708e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163435006e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163455924792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163476956667e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163496994833e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163517955875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163538963792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163559916583e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163580965292e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163601928083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163623046625e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163643964542e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.2061636639915e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163684974167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163705925e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163726974042e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163747947125e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163769060083e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163789959875e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163811075167e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.206163831029792e6,
+      "bytes": [
+        248
+      ]
+    },
+    {
+      "arrivalSeconds": 1.20616385192425e6,
+      "bytes": [
+        248
+      ]
+    }
+  ],
+  "previewLimit": 256
+}

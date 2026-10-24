@@ -20,7 +20,8 @@ struct ScaleSettings {
         if (note<0 || note>127 || !valid()) return -1;
         const bool direct=owner==source::input || owner==source::keyboard;
         const bool pad=owner>=source::firstPad && owner<source::firstPad+source::padCount;
-        if (mode==off || (!direct && !(pad && pads)) || contains(note)) return note;
+        const bool mappedPad=owner>=source::firstMappedPad && owner<source::firstMappedPad+source::padCount;
+        if (mode==off || (!direct && !((pad || mappedPad) && pads)) || contains(note)) return note;
         if (mode==reject) return -1;
         for (int distance=1;distance<12;++distance) {
             if (contains(note-distance)) return note-distance; // Lower note wins ties.

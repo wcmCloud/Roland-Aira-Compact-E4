@@ -17,7 +17,7 @@ C++ structs. Decode validates the entire candidate before assigning it; wrong
 size, magic, future version, malformed names, duplicate/unordered offsets and
 invalid numeric values fail without changing the destination. Encode also
 leaves its destination intact on failure. This is a new app preset payload,
-embedded as Base64 in schema-5 plug-in state and exported as Base64 text in
+embedded as Base64 in schema-6 plug-in state and exported as Base64 text in
 .e4bank files. Schemas 1–3 migrate to factory pads; schemas 1–4 default scale processing to Off. Inversion/octave automation
 parameters override corresponding embedded values at runtime. The payload does
 not contain held notes or connection state. Standalone persists the active bank
@@ -93,3 +93,44 @@ Scale parameters are host-automatable and stored in schema 5, separate from
 chord-only bank files. Standalone restores them with devices disconnected.
 Raw input highlights remain before scale/transpose. Chord previews use an
 explicit scale snapshot captured on opening, before global transpose.
+
+## Controller mapping stage (P5)
+
+ControllerProfile has eight fixed bindings and a strict 61-byte E4MP/version-1
+wire format. Validation rejects unsupported values, duplicate action targets
+and overlapping channel/omni input assignments. ValueExchange now generalizes
+the chord-bank snapshot publication to controller profiles; writers remain
+non-real-time and audio consumers perform one bounded atomic read attempt.
+The wire payload is Base64 in .e4map files and schema-6 host state. Older host
+state migrates to an all-disabled profile.
+
+ControllerRouter consumes raw notes/CCs before scale/transpose. It tracks
+original note holds by channel/note, including repeated counts and consumed
+release policy. Profile replacement releases actions and retires their routes
+without forgetting which later releases must still be consumed. A captured
+note never triggers an action and must drain before a fresh press can act.
+CC learning suppresses the captured value; momentary actions also require
+release before rearming. High/low thresholds (80/48) provide hysteresis.
+Continuous controllers map absolute values; repeated values after cleanup are
+blocked until changed. Ownership saturation performs fail-closed Panic.
+
+Screen pads keep sources 2–5; arp/sequence remain reserved 6/7; controller pads
+use sources 8–11. Separate ChordPads instances preserve note snapshots and
+independent screen/controller releases. Both pad ranges honour scale inclusion.
+All sources share the same physical four-voice allocator. A controller Panic
+is handled after router dispatch, avoiding recursive router mutation from the
+action callback. Standalone parameter changes occur on its message-thread
+drain; plug-in mappings update audio-owned overrides only.
+
+MappedParameters holds transpose plus four inversion overrides. At block entry,
+a changed host base value replaces the override and wins that block. Otherwise
+incoming controller values can update it at MIDI sample offsets. Atomic
+feedback is read by UI/state serialization; no host API is called from mapping
+actions in the callback. This does not claim sample-accurate host automation
+or recognition of a repeated unchanged host value as a new automation event.
+
+Known limits: eight bindings, one input binding per target, notes restricted to
+pad/Panic actions, no toggle/latch, and no generator mappings. Controller profiles
+and chord banks export separately. Physical CC delivery depends on host routing
+and control-surface reservations; JUCE software-host CC delivery is tested,
+while physical Live acceptance remains outstanding.

@@ -1,5 +1,6 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <iostream>
+#include "../Source/ControllerMappings.h"
 
 int main(int argc,char** argv) {
     juce::ScopedJuceInitialiser_GUI initialiser;
@@ -118,6 +119,45 @@ int main(int argc,char** argv) {
     midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,61,static_cast<juce::uint8>(100)),5); plugin->processBlock(audio,midi);
     bool rejected=true; for (const auto event : midi) if (event.getMessage().isNoteOn()) rejected=false;
     check(rejected,"actual VST3 rejects out-of-scale note");
+    // JUCE host-state fixture: replace only the component's E4State mapping payload.
+    if (transpose) transpose->setValueNotifyingHost(0.5f);
+    if (scaleMode) scaleMode->setValueNotifyingHost(0.0f);
+    midi.clear();plugin->processBlock(audio,midi);
+    juce::MemoryBlock mappingState;plugin->getStateInformation(mappingState);
+    bool fixtureLoaded=false;
+    if (auto wrapper=juce::AudioProcessor::getXmlFromBinary(mappingState.getData(),static_cast<int>(mappingState.getSize()))) {
+        if (auto* component=wrapper->getChildByName("IComponent")) {
+            juce::MemoryBlock raw;
+            if (raw.fromBase64Encoding(component->getAllSubText())) {
+                if (auto settings=juce::AudioProcessor::getXmlFromBinary(raw.getData(),static_cast<int>(raw.getSize()))) {
+                    e4::ControllerProfile profile;
+                    profile.bindings[0]={e4::ControllerBinding::note,1,48,e4::ControllerBinding::pad1,true,64,2};
+                    profile.bindings[1]={e4::ControllerBinding::cc,1,20,e4::ControllerBinding::transpose,true,64,2};
+                    e4::ControllerPreset::Bytes bytes;e4::ControllerPreset::encode(profile,bytes);
+                    settings->setAttribute("controllerProfile",juce::Base64::toBase64(bytes.data(),bytes.size()));
+                    juce::AudioProcessor::copyXmlToBinary(*settings,raw);
+                    component->deleteAllChildElements();component->addTextElement(raw.toBase64Encoding());
+                    juce::AudioProcessor::copyXmlToBinary(*wrapper,mappingState);
+                    plugin->setStateInformation(mappingState.getData(),static_cast<int>(mappingState.getSize()));fixtureLoaded=true;
+                }
+            }
+        }
+    }
+    check(fixtureLoaded,"actual VST3 accepts controller-profile state fixture");
+    midi.clear();plugin->processBlock(audio,midi);
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOn(1,48,static_cast<juce::uint8>(100)),12);
+    midi.addEvent(juce::MidiMessage::noteOff(1,48),64);plugin->processBlock(audio,midi);
+    int mappedOns=0,mappedOffs=0;bool mappedTiming=true;
+    for (const auto event : midi) {
+        if (event.getMessage().isNoteOn()) { ++mappedOns;mappedTiming=mappedTiming && event.samplePosition==12 && event.getMessage().getNoteNumber()!=48; }
+        if (event.getMessage().isNoteOff()) { ++mappedOffs;mappedTiming=mappedTiming && event.samplePosition==64; }
+    }
+    check(mappedOns==3 && mappedOffs==3 && mappedTiming,"actual VST3 mapped pad consumes trigger and preserves sample offsets");
+    midi.clear();midi.addEvent(juce::MidiMessage::controllerEvent(1,20,127),5);plugin->processBlock(audio,midi);
+    midi.clear();midi.addEvent(juce::MidiMessage::noteOn(1,60,static_cast<juce::uint8>(100)),10);
+    midi.addEvent(juce::MidiMessage::noteOff(1,60),32);plugin->processBlock(audio,midi);
+    bool ccMapped=false;for (const auto event : midi) if (event.getMessage().isNoteOn() && event.getMessage().getNoteNumber()==84) ccMapped=true;
+    check(ccMapped,"actual JUCE VST3 host delivers CC to controller mapping");
     plugin->releaseResources(); plugin.reset();
     auto* report = new juce::DynamicObject();
     report->setProperty("plugin",descriptions[0]->name);

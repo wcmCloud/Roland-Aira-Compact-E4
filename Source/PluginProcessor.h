@@ -3,6 +3,7 @@
 #include "MidiEngine.h"
 #include "ChordPads.h"
 #include "SettingsExchange.h"
+#include "ControllerService.h"
 #include "PerformanceQueue.h"
 #include "InputNoteState.h"
 #include <atomic>
@@ -21,6 +22,8 @@ public:
     std::uint32_t rejectionCount() const noexcept { return rejectedCount.load(); }
     e4::MidiEngine::Rejection lastRejection() const noexcept { return static_cast<e4::MidiEngine::Rejection>(rejectedReason.load()); }
     std::array<std::uint64_t,2> incomingNotes() const noexcept { return {inputLow.load(),inputHigh.load()}; }
+    e4::ControllerService controllers;
+    int effectiveValue(std::size_t index) const;
     e4::ScaleSettings scaleSettings() const;
     e4::PerformanceSettings chordBank() const;
     bool setChordBank(const e4::PerformanceSettings& bank);
@@ -47,6 +50,10 @@ private:
     juce::MidiBuffer output;
     e4::PerformanceQueue performance;
     e4::ChordPads chords;
+    e4::ChordPads mappedChords {e4::source::firstMappedPad};
+    e4::MappedParameters mappedValues;
+    std::array<std::atomic<int>,5> mappedFeedback {},mappedBase {};
+    std::atomic<bool> feedbackReady {false},resetMappedValues {false};
     e4::SettingsExchange bankExchange;
     std::uint64_t bankSerial = 0;
     std::atomic<bool> uiReleaseRequested { false };
