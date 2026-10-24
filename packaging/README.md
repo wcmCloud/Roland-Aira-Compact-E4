@@ -45,3 +45,7 @@ No Windows/Linux installer or binaries are included yet. See [Steinberg plug-in 
 The final studio DMG also includes the writable-copy test kit, Live acceptance set, deterministic MIDI fixtures and signed receive-only diagnostic tool. Build e4_midi_probe before packaging. No PDF manual or account credentials are redistributed in the kit.
 
 The signed graphical E-4 Installer app installs chosen formats into the current user’s folders with backups and rollback, avoiding the need for a system PKG certificate. Install.command remains an optional Terminal fallback. The installer app is signed with the same Developer ID Application identity and included in DMG notarization.
+
+## Licences and corresponding source
+
+Packaging includes LICENSE.md, MIT/GPL-3.0 texts and THIRD_PARTY_NOTICES.md plus dependency notices in Studio Test Kit/Licences. Studio Test Kit/Sources contains the project/build scripts and JUCE 8.0.10 source without Git history, generated build products, local signing configuration or the Roland reference manual. The pinned framework checkout is required when packaging; extracted source archives use the included JUCE folder. Linked binaries retain JUCE AGPL/commercial requirements; project source licensing does not override them.

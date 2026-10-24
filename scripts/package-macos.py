@@ -9,6 +9,7 @@ import plistlib
 import shlex
 import shutil
 import subprocess
+import tarfile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +80,42 @@ shutil.copy2(ROOT / 'docs/ableton/E4 Studio Acceptance Project/E4 Studio Accepta
 shutil.copy2(ROOT / 'docs/ableton/README.md', kit / 'Ableton/ROUTING.md')
 shutil.copy2(ROOT / 'docs/HARDWARE_TESTS.md', kit / 'DETAILED-TESTS.md')
 shutil.copy2(ROOT / 'docs/validation/studio-preflight-2026-10-24/README.md', kit / 'VALIDATION.md')
+legal = kit / 'Licences'
+legal.mkdir()
+for name in ['LICENSE.md', 'LICENSE-MIT', 'LICENSE-GPL-3.0', 'THIRD_PARTY_NOTICES.md']:
+    shutil.copy2(ROOT / name, legal / name)
+shutil.copytree(ROOT / 'licenses', legal / 'licenses')
+# Include reproducible build sources and the pinned framework, never credentials,
+# build products, Git history or the separately owned Roland reference manual.
+source_folder = kit / 'Sources'
+source_folder.mkdir()
+source_archive = source_folder / f'E4-Companion-{version}-source.tar.gz'
+juce = ROOT / 'build/_deps/juce-src'
+if not juce.is_dir():
+    juce = ROOT / 'JUCE'  # Extracted corresponding-source archive layout.
+if not (juce / 'CMakeLists.txt').is_file():
+    raise RuntimeError('Pinned JUCE sources are required for the source archive')
+def source_filter(info):
+    parts = Path(info.name).parts
+    if any(p in ('.git', 'bin', 'obj', '__pycache__', 'Backup', 'Ableton Project Info') for p in parts):
+        return None
+    if parts[-1] in ('.DS_Store', 'Icon\r', 'E-4_eng01_W.pdf') or parts[-1].endswith('.env'):
+        return None
+    return info
+with tarfile.open(source_archive, 'w:gz') as archive:
+    for name in ['Source','Tools','Tests','assets','docs','licenses','packaging','scripts',
+                 'CMakeLists.txt','README.md','PLAN.md','LICENSE.md','LICENSE-MIT',
+                 'LICENSE-GPL-3.0','THIRD_PARTY_NOTICES.md','.gitignore']:
+        archive.add(ROOT / name, arcname='E4-Companion-source/' + name, filter=source_filter)
+    archive.add(juce, arcname='E4-Companion-source/JUCE', filter=source_filter)
+(source_folder / 'BUILD-SOURCE.txt').write_text('''Extract the source archive. From E4-Companion-source:
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$PWD/JUCE"
+cmake --build build --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_installer e4_midi_probe -j 6
+
+JUCE 8.0.10 sources are included. Ordinary builds use committed icon assets and
+do not require .NET. Licence texts and third-party notices are included. The
+Roland manual, credentials, Git history and build products are excluded.
+''')
 tools = kit / 'Tools'
 tools.mkdir()
 probe = tools / 'e4_midi_probe'
@@ -96,6 +133,8 @@ The installer shows progress and the backup location. Restart/rescan your host a
 You may instead copy only the formats you need to their standard plug-in folders.
 Copy Studio Test Kit to a writable folder, then read START-HERE.md. It includes
 the Live routing set, short MIDI test clips and a result sheet for the studio.
+Licence texts, third-party notices and corresponding build/framework sources
+are included in Studio Test Kit/Licences and Studio Test Kit/Sources.
 
 AU MIDI output in Ableton Live is unsupported; use VST3 with the documented
 second-track MIDI route. This companion requires the physical Roland E-4 and
