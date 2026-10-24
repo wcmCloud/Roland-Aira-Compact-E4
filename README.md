@@ -1,0 +1,97 @@
+# E-4 Companion
+
+JUCE C++17 starter for a Roland AIRA E-4 hardware companion: VST3, AU and Standalone on macOS. See [PLAN.md](PLAN.md) for capabilities, architecture, Ableton setup and phased work.
+
+## Documentation
+
+[Roland E-4 owner’s manual (PDF)](docs/E-4_eng01_W.pdf) — local reference manual supplied for this project.
+
+## Current behaviour
+
+First implementation of the shared MIDI engine and plug-in interface:
+
+- Maps incoming notes and pitch bend to the selected channel (default 3).
+- Allows four distinct notes; rejects a fifth until a voice is released.
+- Counts repeated notes and overlapping input-channel ownership so one release cannot silence another held source.
+- Filters unsupported messages without discarding valid releases in the same block. Incoming clock/transport bytes are deliberately dropped: use Live's port Sync in plug-in workflows. Standalone has an optional internal clock master.
+- Panic sends explicit Note Offs for owned notes and centres bend. Channel changes, host stop transitions, state restore and bypass also clean up owned notes.
+- Transposes notes by −24 to +24 semitones; out-of-range notes are rejected rather than clamped. Changing transpose releases held output pitches and centres bend before new notes are accepted.
+- Saves channel, chord root and transpose as schema-3 plug-in state; older schemas migrate to a default transpose of zero and, where needed, root 60. Held notes are never restored.
+- Bounds incoming work to 2048 events per block, then releases owned notes and drops the remainder.
+
+The plug-in emits silent audio; record the physical E-4 audio separately. Enable VOCODER, KEY IN and HARMONY on the hardware. VST3 host routing is the first supported design path, pending hardware testing. The dedicated standalone app now provides direct MIDI port management. The AU output workflow remains experimental: Ableton does not expose AU direct MIDI output.
+
+Panic needs a processing callback to send MIDI; a suspended host, removed instance or disconnected device cannot be guaranteed a final cleanup message. The internal event staging buffer is preallocated, but the host-provided JUCE MIDI buffer may still grow when output is copied; strict no-allocation certification remains outstanding.
+
+## Plug-in performance controls
+
+The VST3/AU editor now includes an on-screen keyboard, momentary Major/Minor/Sus2/Maj7 chord pads, a root control, spring-centred pitch bend and an active-voice display and transpose. Host clips, the UI keyboard and each pad own their notes separately while sharing the physical four-voice limit. Channel, chord root and transpose can be automated; changing the root releases existing pad notes without replaying them.
+
+Editor gestures enter a bounded single-producer/single-consumer queue. They are emitted at sample zero of the next processing block; clip MIDI retains its within-block sample offsets. These UI gestures are not sample-accurate automation. Lost queue events trigger note cleanup instead of leaving a dropped Note Off stuck. Closing the editor releases only UI-owned notes at the next callback, preserving notes owned by host clips. The bend is centred on editor close. Panic, bypass and host stop still release all owned notes.
+
+In Live, load the VST3 on the controller track and route its MIDI output through a second MIDI track to the E-4 (see PLAN.md). The AU build has the same interface but its direct MIDI-output workflow remains unsupported. Plug-in UI controls require host processing callbacks to send anything; if the host suspends the instance, queued cleanup must wait.
+
+## Standalone quick start
+
+Open `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app` after building `AiraE4_Standalone`.
+
+1. Connect the E-4 and enable VOCODER, KEY IN and HARMONY on it.
+2. Select its MIDI output and an optional keyboard/controller MIDI input. Press **Connect**; selecting a port alone does not change the active route.
+3. Match the hardware MIDI channel (default 3). Play the on-screen keyboard or hold Major, Minor, Sus2 or Maj7 pads. Choose the chord root by MIDI note number and a transpose value in semitones. Keyboard, external notes and pads share the four-voice limit; additional distinct notes are rejected.
+4. Drag pitch bend; it returns to centre when released. Double-click also centres it. Use Panic to release owned notes and reset bend.
+5. Route/record audio from the E-4 separately. This app opens no audio device and synthesises no audio.
+
+The app remembers desired input/output identifiers, channel, chord root and transpose, but never automatically reconnects or replays notes. Switching routes releases the old endpoint first; disconnect, channel/transpose change and shutdown also clear held notes. Device removal is polled roughly once a second. Sleep or a UI pause over two seconds disconnects until you explicitly reconnect. Internal clock defaults off and is never automatically restored. Incoming clock is not forwarded.
+
+Notes use a short bounded input queue drained on a 5 ms UI timer. This note path is a first performance implementation: busy UI work can delay notes. Internal clock uses a separate timing thread (see below). Queue overflow drops pending events and releases owned notes. A missing physical endpoint may not receive cleanup, so device/hardware validation is still needed. Only one standalone app instance is allowed; ownership against other apps is not enforced.
+
+## Standalone clock and transport
+
+After connecting the output, enable **Internal clock (sole master)**, choose 20–300 BPM, and press **Start**. Start sends MIDI Start followed by the first clock pulse; subsequent clock pulses run at 24 PPQN on a dedicated high-priority thread. Tempo changes preserve the remaining fractional pulse phase. Stop sends MIDI Stop once, stops clock output, releases owned notes and centres bend. Panic also stops transport. MIDI clocks are sent only while this transport is running.
+
+Clock starts off every launch and is disabled on route changes, disconnect and removal. Only BPM is remembered. Start after Stop is a fresh restart: no Continue or song-position chase is sent. Configure the E-4 clock source for USB or MIDI as appropriate; actual looper record/play arming and Start/Stop response require hardware verification. Do not enable the internal master alongside Live Sync or another clock sender. Incoming clock and transport are neither followed nor echoed.
+
+The scheduler accumulates absolute deadlines; it does not add a period to each wake time. If a full pulse interval is missed, it sends Stop and waits for explicit restart instead of catching up in a burst. A two-second UI heartbeat timeout also stops clock independently of the UI thread. Port output is serialised under a short lock outside audio processing; a slow device/driver can still delay both note and clock sends. This is best-effort desktop scheduling, with no measured hardware jitter guarantee.
+
+Software simulations at 60/120/180 BPM produce the expected pulse counts over ten minutes with under one microsecond of calculated deadline drift. Those results test the planner, not thread wake-up jitter, physical MIDI delivery or the E-4. Capture actual timing under load before using clock in a performance.
+
+## Build
+
+Prerequisites: Xcode command line tools, CMake 3.22+ and a JUCE checkout. These are now available on this Mac, with JUCE under `build/_deps/juce-src`. No additional dependency installation is needed for that checkout.
+
+```sh
+cd "/Users/chris/Documents/GitHub/Aira E4"
+cmake -S . -B build -G Xcode -DJUCE_SOURCE_DIR="/absolute/path/to/JUCE"
+cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+Alternatively configure with `-DE4_FETCH_JUCE=ON` instead of JUCE_SOURCE_DIR to download the selected JUCE 8.0.10 baseline. Requires network access. Review JUCE licensing before distributing. Outputs are under `build/AiraE4_artefacts/Debug/`; nothing is automatically copied to system or user plug-in folders. Initial IDs are placeholders for development.
+
+Core only, with CMake:
+
+```sh
+cmake -S . -B build-core -DE4_BUILD_APPS=OFF
+cmake --build build-core
+ctest --test-dir build-core --output-on-failure
+```
+
+Core only, with the installed compiler:
+
+```sh
+mkdir -p build-core
+clang++ -std=c++17 -Wall -Wextra -Werror -ISource Tests/CoreTests.cpp -o build-core/e4_core_tests
+./build-core/e4_core_tests
+```
+
+## Verification
+
+Core tests cover ownership, limits, filtering/release interactions, channel cleanup, note/bend boundaries, panic and 1000 stress cycles. A second test target exercises the actual JUCE processor: sample offsets, filtering, state round-trip, invalid state, bypass and overload cleanup. Run all three with CTest after building `e4_core_tests`, `e4_processor_tests` and `e4_clock_tests`.
+
+VST3, AU and standalone Debug builds pass in `build-check`; all three CTest suites pass. The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
+
+Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on Apple clang 21, arm64. Hardware and DAW integration remain untested. See PLAN.md for the current milestone status.
+
+The automated Xcode build encountered a module-cache write error in this session; a later Xcode refresh also failed during JUCE helper compiler discovery. The successful verification used a separate Makefiles build, preserving the existing Xcode project. To refresh Xcode from your own Terminal, run the CMake configuration command above with the local JUCE path. The already built standalone app in `build-check` is available independently of that refresh.
+
+Manual acceptance steps are in [docs/HARDWARE_TESTS.md](docs/HARDWARE_TESTS.md). These checks have not yet been performed on an E-4 or in Ableton.
