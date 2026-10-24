@@ -7,3 +7,6 @@ build*/
 docs/ableton/**/Ableton Project Info/
 docs/ableton/**/Backup/
 docs/ableton/**/Icon?
+
+# Local signing configuration (names only; credentials remain in Keychain).
+scripts/signing.local.env

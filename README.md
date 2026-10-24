@@ -206,3 +206,7 @@ The built VST3 passes mapped pad timing/consumption and CC20 delivery in a JUCE 
 ## Formal validation and installation
 
 Apple AU validation and Steinberg VST3 validation pass (47 VST3 checks, zero failures). All eight project checks and the installed VST3 wrapper check pass. For repeatable development installation with backups, use `python3 scripts/install-dev-plugins.py` (add `--au` for experimental AU). See [results and installation/restore instructions](docs/validation/formal-2026-10-24/README.md). Clean-account distribution testing and signing/notarisation remain open.
+
+## macOS installer
+
+Release packaging now creates a VST3/AU/standalone choice-based PKG and a signed, notarized DMG with a user-folder installer. See [packaging and notarization](packaging/README.md). The current Mac produces Apple Silicon builds; Windows/Linux need native builds and separate installers. The PKG remains explicitly unsigned until a Developer ID Installer certificate is available.

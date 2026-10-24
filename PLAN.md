@@ -45,6 +45,10 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 Official Steinberg VST3 validator: 47 passed, zero failed after fixing the empty factory-program name. Apple auval passes. Both development bundles were freshly installed with backups, strict signature checks and per-file hashes; installed VST3 wrapper checks and all eight CTest checks pass. See [validation record](docs/validation/formal-2026-10-24/README.md). Clean-account installation, signing/notarisation and AU MIDI routing remain open. This supersedes older pending-validator statements below.
 
+## Installer update — 24 October 2026
+
+Added native arm64 Release packaging, a choice-based system PKG, a user-folder installer with backup/rollback, and Developer ID signing/notarytool submission/stapling/Gatekeeper assessment using the existing T-8 signing setup. DMG notarization succeeds; PKG distribution signing awaits a Developer ID Installer certificate. Isolated-folder fresh installation and upgrade pass; real clean-account/system PKG installation remains pending. Windows/Linux require native builds, validators and installers; AU is Apple-only. See [packaging](packaging/README.md).
+
 ## Implementation progress
 
 - Fixed missing external-keyboard/host-clip highlights. Incoming-note display state is tracked separately by input channel and repeated holds, then painted alongside mouse/computer-keyboard state. Visual updates never call note listeners or generate MIDI. The view follows out-of-range incoming pitches; highlights show input pitches before transpose.

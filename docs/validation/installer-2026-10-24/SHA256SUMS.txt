@@ -1,0 +1,2 @@
+ae6da65893d69eaf1acd259a32c7c2608bcdc5813cf75ff1d992a964efad9ed3  E4-Companion-0.1.0-macOS-arm64-UNSIGNED.pkg
+5b446bf9af3b1f8a6ec93c107019c69924c0ea11e98749f5db4a94075fc66dbc  E4-Companion-0.1.0-macOS-arm64.dmg
