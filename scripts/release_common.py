@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 JUCE_REVISION = '3af3ce009f6a02f6fa651008fffb5b41743a9fab'
 
 def version():
-    return re.search(r'project\(AiraE4 VERSION ([0-9.]+)', (ROOT/'CMakeLists.txt').read_text()).group(1)
+    return re.search(r'project\(AiraE4 VERSION ([0-9.]+)', (ROOT/'CMakeLists.txt').read_text(encoding='utf-8')).group(1)
 
 def framework():
     for path in [ROOT/'JUCE', ROOT/'build/_deps/juce-src']:

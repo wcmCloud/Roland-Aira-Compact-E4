@@ -27,7 +27,7 @@ shutil.copy2(probe,stage/probe.name)
 copy_legal(stage/'Licences')
 shutil.copytree(ROOT/'docs/studio',stage/'Studio-test-kit')
 source_archive(stage/'Sources'/f'E4-Companion-{version()}-source.tar.gz')
-(stage/'INSTALL.txt').write_text((ROOT/'docs/RELEASE-NOTES.md').read_text(), encoding='utf-8')
+(stage/'INSTALL.txt').write_text((ROOT/'docs/RELEASE-NOTES.md').read_text(encoding='utf-8'), encoding='utf-8')
 if a.platform=='Linux':
     shutil.copy2(ROOT/'assets/icon/png/app-icon-256.png',stage/'e4-companion.png')
     shutil.copy2(ROOT/'packaging/linux/install.sh',stage/'install.sh')

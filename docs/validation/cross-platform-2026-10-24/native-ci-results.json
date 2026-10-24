@@ -1,0 +1,47 @@
+{
+  "run": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652",
+  "jobs": [
+    {
+      "name": "build (windows-11-arm, Windows, arm64, ARM64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888375"
+    },
+    {
+      "name": "build (macos-15, macOS, arm64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888640"
+    },
+    {
+      "name": "build (ubuntu-24.04-arm, Linux, arm64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888643"
+    },
+    {
+      "name": "build (macos-15-intel, macOS, x64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888653"
+    },
+    {
+      "name": "build (ubuntu-24.04, Linux, x64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888656"
+    },
+    {
+      "name": "build (windows-2022, Windows, x64, x64)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120955888844"
+    },
+    {
+      "name": "release",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/runs/40122166652/job/120958657351"
+    }
+  ]
+}
