@@ -4,7 +4,7 @@ JUCE C++17 starter for a Roland AIRA E-4 hardware companion: VST3, AU and Standa
 
 ## Interface
 
-The standalone and plug-in share a custom dark studio theme with lime accents, tinted momentary chord pads, rounded numeric controls and a full-width keyboard. Standalone groups device routing and clock in a sidebar; both versions keep performance controls and Panic prominent. Bend displays Centre or a percentage while retaining its existing MIDI range. Connection status describes the opened MIDI route, not a hardware handshake.
+The standalone and plug-in share a custom dark studio theme with lime accents, tinted momentary chord pads, rounded numeric controls and a full-width keyboard. Standalone groups device routing and clock in a sidebar; both versions keep performance controls and Panic prominent. Bend displays Centre or a percentage while retaining its existing MIDI range. Root labels use C4 (60) for middle C and accept MIDI numbers, sharp/flat names or their own formatted labels. The keyboard uses the same octave convention. A four-segment voice indicator flashes briefly for rejected notes, distinguishing the four-voice limit from out-of-range transposition. Connection status describes the opened MIDI route, not a hardware handshake.
 
 Standalone defaults to 1040 × 780 and can resize; the plug-in is 960 × 650. Component-rendered previews are in [docs/ui](docs/ui). To regenerate them without opening devices or reading/writing standalone preferences:
 
@@ -47,8 +47,8 @@ In Live, load the VST3 on the controller track and route its MIDI output through
 Open `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app` after building `AiraE4_Standalone`.
 
 1. Connect the E-4 and enable VOCODER, KEY IN and HARMONY on it.
-2. Select its MIDI output and an optional keyboard/controller MIDI input. Press **Connect**; selecting a port alone does not change the active route.
-3. Match the hardware MIDI channel (default 3). Play the on-screen keyboard or hold Major, Minor, Sus2 or Maj7 pads. Choose the chord root by MIDI note number and a transpose value in semitones. Keyboard, external notes and pads share the four-voice limit; additional distinct notes are rejected.
+2. Select its MIDI output and an optional keyboard/controller MIDI input. Press **Connect**; selecting a port alone does not change the active route. When connected, changed dropdown choices show Apply ports and keep the old route until you apply them.
+3. Match the hardware MIDI channel (default 3). Play the on-screen keyboard or hold Major, Minor, Sus2 or Maj7 pads. Choose the chord root by MIDI note number or note name (for example C4 or Db4) and a transpose value in semitones. Keyboard, external notes and pads share the four-voice limit; additional distinct notes are rejected.
 4. Drag pitch bend; it returns to centre when released. Double-click also centres it. Use Panic to release owned notes and reset bend.
 5. Route/record audio from the E-4 separately. This app opens no audio device and synthesises no audio.
 

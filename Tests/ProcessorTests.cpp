@@ -160,6 +160,8 @@ int main() {
         midi.addEvent(juce::MidiMessage::noteOn(1,note,static_cast<juce::uint8>(100)),0);
     rejectionProcessor.processBlock(audio,midi);
     check(rejectionProcessor.activeVoices() == 4,"processor tracks four accepted voices");
+    check(rejectionProcessor.rejectionCount() == 1 && rejectionProcessor.lastRejection() == e4::MidiEngine::Rejection::voiceLimit,
+          "processor publishes rejection feedback for the UI without changing output");
     midi.clear(); midi.addEvent(juce::MidiMessage::noteOff(1,60),0);
     midi.addEvent(juce::MidiMessage::noteOn(1,64,static_cast<juce::uint8>(100)),1);
     rejectionProcessor.processBlock(audio,midi);

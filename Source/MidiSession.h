@@ -49,6 +49,8 @@ public:
     void process(MidiEvent event, int source = 0) {
         if (sink != nullptr) engine.process(event.status, event.first, event.second, emitter(), source);
     }
+    std::uint32_t rejectionCount() const noexcept { return engine.rejectionCount(); }
+    MidiEngine::Rejection lastRejection() const noexcept { return engine.lastRejection(); }
     int activeVoices() const noexcept { return engine.activeVoices(); }
     int channel() const noexcept { return engine.outputChannel(); }
 private:

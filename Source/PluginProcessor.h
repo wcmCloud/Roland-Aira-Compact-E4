@@ -16,6 +16,8 @@ public:
     bool postPerformance(e4::PerformanceCommand command) noexcept { return performance.push(command); }
     void requestUiRelease() noexcept { uiReleaseRequested.store(true); }
     int activeVoices() const noexcept { return voiceCount.load(); }
+    std::uint32_t rejectionCount() const noexcept { return rejectedCount.load(); }
+    e4::MidiEngine::Rejection lastRejection() const noexcept { return static_cast<e4::MidiEngine::Rejection>(rejectedReason.load()); }
     juce::AudioProcessorValueTreeState parameters;
     bool isBusesLayoutSupported(const BusesLayout&) const override;
     const juce::String getName() const override { return "E-4 Companion"; }
@@ -39,6 +41,8 @@ private:
     e4::ChordPads chords;
     std::atomic<bool> uiReleaseRequested { false };
     std::atomic<int> voiceCount { 0 };
+    std::atomic<std::uint32_t> rejectedCount {0};
+    std::atomic<int> rejectedReason {0};
     int lastRoot = 60;
     std::atomic<bool> panicRequested { false };
     bool wasPlaying = false;

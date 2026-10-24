@@ -17,13 +17,15 @@ public:
         bendLabel.setText("PITCH BEND",juce::dontSendNotification);
         for (auto* label : {&info,&channelLabel,&rootLabel,&transposeLabel,&bendLabel}) { e4::ui::label(*label,true); addAndMakeVisible(label); }
         e4::ui::label(status); status.setJustificationType(juce::Justification::right);
+        addAndMakeVisible(voiceDisplay);
+        voiceDisplay.reset(owner.activeVoices(),owner.rejectionCount());
         status.setText(juce::String(owner.activeVoices()) + " / 4 voices",juce::dontSendNotification);
         for (auto* slider : {&channel,&root,&transpose}) {
             slider->setLookAndFeel(&theme);
             slider->setSliderStyle(juce::Slider::IncDecButtons);
             slider->setTextBoxStyle(juce::Slider::TextBoxLeft,false,120,26);
         }
-        channel.setTextValueSuffix(""); root.setTextValueSuffix("  MIDI note"); transpose.setTextValueSuffix(" st");
+        channel.setTextValueSuffix(""); e4::ui::rootStyle(root); transpose.setTextValueSuffix(" st");
         bend.setLookAndFeel(&theme);
         bend.setRange(0,16383,1); e4::ui::bendStyle(bend); bend.setValue(8192,juce::dontSendNotification);
         bend.setTextValueSuffix(""); bend.setTextBoxStyle(juce::Slider::TextBoxRight,false,76,32); bend.setDoubleClickReturnValue(true,8192);
@@ -63,7 +65,7 @@ public:
         place(transposeLabel,528,179,220,18); place(transpose,528,202,220,36);
         place(bendLabel,44,265,100,22); place(bend,156,255,760,38);
         for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,370,209,78);
-        place(status,560,499,354,22); place(keyboard,44,534,872,58);
+        status.setBounds(0,0,0,0); place(voiceDisplay,676,499,240,22); place(keyboard,44,534,872,58);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
     }
 
@@ -77,12 +79,14 @@ private:
     }
     void timerCallback() override {
         juce::MidiBuffer unused; keys.processNextMidiBuffer(unused,0,1,false);
-        status.setText(juce::String(owner.activeVoices()) + " / 4 voices",juce::dontSendNotification);
+        voiceDisplay.update(owner.activeVoices(),owner.rejectionCount(),owner.lastRejection());
     }
     e4::ui::Theme theme;
     E4Processor& owner;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard;
+    e4::ui::VoiceDisplay voiceDisplay;
+    juce::TooltipWindow tooltips {this,600};
     juce::Label title,info,status,channelLabel,rootLabel,transposeLabel,bendLabel;
     juce::Slider channel,root,bend,transpose;
     juce::TextButton panic;
@@ -174,6 +178,8 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
         engine.process(bytes[0], bytes[1], bytes[2], emit);
     }
     voiceCount.store(engine.activeVoices());
+    rejectedReason.store(static_cast<int>(engine.lastRejection()));
+    rejectedCount.store(engine.rejectionCount());
     // Internal staging is reserved. Host-owned MidiBuffer capacity is host dependent.
     midi.clear();
     midi.addEvents(output, 0, -1, 0);

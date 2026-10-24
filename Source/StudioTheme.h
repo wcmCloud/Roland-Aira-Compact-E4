@@ -1,5 +1,7 @@
 #pragma once
 #include <juce_audio_utils/juce_audio_utils.h>
+#include "NoteNames.h"
+#include "MidiEngine.h"
 
 namespace e4::ui {
 inline const juce::Colour background{0xff101417}, panel{0xff191f24}, edge{0xff30393f};
@@ -99,6 +101,55 @@ inline void label(juce::Label& control,bool secondary = false) {
     control.setColour(juce::Label::textColourId,secondary ? muted : text);
     control.setBorderSize(juce::BorderSize<int>(0));
 }
+class VoiceDisplay final : public juce::Component, public juce::SettableTooltipClient {
+public:
+    VoiceDisplay() { setTooltip("Four physical vocoder voices are shared by clips, keyboard and chord pads."); }
+    void reset(int count,std::uint32_t serial) {
+        voices = count; seen = serial; until = 0; warning = false; repaint();
+    }
+    void update(int count,std::uint32_t serial,e4::MidiEngine::Rejection reason) {
+        const double now = juce::Time::getMillisecondCounterHiRes();
+        const bool newRejection = serial != seen;
+        if (newRejection) {
+            seen = serial; last = reason; until = now+2000;
+            setTooltip(reason == e4::MidiEngine::Rejection::outOfRange
+                ? "This transposed note is outside MIDI 0-127. Change the note or transpose."
+                : "Four-voice limit reached. Fully release rejected keys before trying that pitch again.");
+        }
+        const bool nextWarning = now < until;
+        if (voices != count || warning != nextWarning || newRejection) { voices = count; warning = nextWarning; repaint(); }
+    }
+    void paint(juce::Graphics& g) override {
+        const auto colour = warning ? danger : accent;
+        const float middle = static_cast<float>(getHeight())*0.5f;
+        for (int i = 0; i < 4; ++i) {
+            g.setColour(i < voices ? colour : edge);
+            g.fillRoundedRectangle(static_cast<float>(i*12),middle-6,7,12,3);
+        }
+        g.setColour(warning ? danger : muted); g.setFont(font(10,true));
+        const auto message = !warning ? "VOICES" : last == e4::MidiEngine::Rejection::outOfRange ? "OUT OF RANGE"
+            : last == e4::MidiEngine::Rejection::counterOverflow ? "INPUT RESET" : "VOICE LIMIT";
+        g.drawFittedText(message,56,0,juce::jmax(0,getWidth()-98),getHeight(),juce::Justification::centredLeft,1);
+        g.setColour(text); g.setFont(font(13,true));
+        g.drawText(juce::String(voices)+"/4",getWidth()-34,0,34,getHeight(),juce::Justification::right);
+    }
+private:
+    int voices = 0;
+    std::uint32_t seen = 0;
+    e4::MidiEngine::Rejection last = e4::MidiEngine::Rejection::none;
+    double until = 0;
+    bool warning = false;
+};
+inline void rootStyle(juce::Slider& slider) {
+    slider.setTextValueSuffix("");
+    slider.textFromValueFunction = [](double value) { return juce::String(e4::noteLabel(juce::roundToInt(value))); };
+    slider.valueFromTextFunction = [&slider](const juce::String& value) {
+        const auto parsed = e4::parseNote(value.toStdString());
+        return parsed ? static_cast<double>(*parsed) : slider.getValue();
+    };
+    slider.updateText();
+    slider.setTooltip("Chord root: type a MIDI note number or name, e.g. 60, C4 or Db4. Middle C is C4 (60).");
+}
 inline void bendStyle(juce::Slider& slider) {
     slider.getProperties().set("bipolar",true);
     slider.textFromValueFunction = [](double value) {
@@ -112,6 +163,7 @@ inline void bendStyle(juce::Slider& slider) {
     slider.setTooltip("Pitch bend amount. Release to return to centre; the E-4 determines the musical range.");
 }
 inline void keyboardStyle(juce::MidiKeyboardComponent& keyboard) {
+    keyboard.setOctaveForMiddleC(4);
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId,juce::Colour(0xffdbe2db));
     keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,juce::Colour(0xff10171a));
     keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId,panel);

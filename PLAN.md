@@ -4,6 +4,9 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Added consistent musical labels (middle C = C4 / MIDI 60), sharp/flat/numeric root entry and four-segment voice indicators. Engine rejection telemetry is published to the UI without locks; the display distinguishes voice limit, out-of-range notes and counter-reset conditions. Regression tests cover all 128 label round-trips, enharmonics, invalid input and processor feedback.
+- Port selection now distinguishes staged choices from the active route, offers Apply ports when connected and disables unavailable connection actions. Applying still performs the existing old-route cleanup; selecting alone sends no MIDI.
+
 - Redesigned both interfaces with a shared native JUCE theme: dark panels, lime/teal/lavender/amber pad accents, rounded controls, a full-width keyboard and clearer connection/voice/transport status. Standalone now groups routing and clock in a sidebar; plug-in controls follow the same visual hierarchy. The MIDI engine, IDs and state schema are unchanged.
 - Added a UI rendering tool that exports the real standalone and plug-in components without opening MIDI devices or loading/saving standalone preferences. Both default-size snapshots have been visually inspected. Live mouse/keyboard and window-resizing acceptance remain separate manual checks.
 

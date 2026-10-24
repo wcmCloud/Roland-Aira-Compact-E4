@@ -172,6 +172,7 @@ public:
         root.setValue(juce::jlimit(36,84,settings->getIntValue("chordRoot",60)),juce::dontSendNotification);
         root.setSliderStyle(juce::Slider::IncDecButtons);
         root.setTextBoxStyle(juce::Slider::TextBoxLeft,false,60,26);
+        e4::ui::rootStyle(root);
         root.onValueChange = [this] { releasePads(); };
         const std::array<juce::String,4> names {"Major","Minor","Sus2","Maj7"};
         for (int i = 0; i < 4; ++i) {
@@ -195,18 +196,21 @@ public:
                 &inputs,&outputs,&connect,&disconnect,&refresh,&channelLabel,&channel,&bendLabel,&bend,
                 &panic,&status,&keyboard}) addAndMakeVisible(component);
         addAndMakeVisible(voices);
+        addAndMakeVisible(voiceDisplay);
         if (!previewMode) refreshPorts();
         else { inputs.addItem("None",1); outputs.addItem("Choose a MIDI output",1); }
         rememberedInput = settings->getValue("input");
         rememberedOutput = settings->getValue("output");
         selectRemembered(inputs,inputDevices,rememberedInput);
         selectRemembered(outputs,outputDevices,rememberedOutput);
-        inputs.onChange = [this] { rememberedInput = selectedIdentifier(inputs,inputDevices); };
-        outputs.onChange = [this] { rememberedOutput = selectedIdentifier(outputs,outputDevices); };
-        status.setText("Disconnected. Restored choices never auto-connect or replay notes.",juce::dontSendNotification);
+        inputs.onChange = [this] { rememberedInput = selectedIdentifier(inputs,inputDevices); portSelectionChanged(); };
+        outputs.onChange = [this] { rememberedOutput = selectedIdentifier(outputs,outputDevices); portSelectionChanged(); };
+        portSelectionChanged();
         voices.setText("0 / 4 voices",juce::dontSendNotification);
         clockState.setText("Clock stopped. Use one clock master.",juce::dontSendNotification);
         start.setEnabled(false); stop.setEnabled(false);
+        connect.setEnabled(selectedIdentifier(outputs,outputDevices).isNotEmpty());
+        disconnect.setEnabled(false);
         if (!previewMode) startTimer(5);
         setSize(1040,780);
     }
@@ -242,7 +246,7 @@ public:
         place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
         place(bendLabel,334,278,90,20); place(bend,432,267,560,40);
         for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,398,154,78);
-        place(voices,820,527,172,22); place(keyboard,334,564,658,86);
+        voices.setBounds(0,0,0,0); place(voiceDisplay,768,527,224,22); place(keyboard,334,564,658,86);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
         place(status,44,701,952,38);
     }
@@ -280,6 +284,18 @@ private:
             || (!activeOutput.isEmpty() && !contains(outputDevices,activeOutput)))
             disconnectPorts("Device removed. Refresh and reconnect explicitly; notes will not replay.");
     }
+    void portSelectionChanged() {
+        const bool hasOutput = selectedIdentifier(outputs,outputDevices).isNotEmpty();
+        const bool staged = selectedIdentifier(inputs,inputDevices) != activeInput
+            || selectedIdentifier(outputs,outputDevices) != activeOutput;
+        connect.setButtonText(sink && staged && hasOutput ? "Apply ports" : "Connect");
+        connect.setEnabled(hasOutput);
+        if (!hasOutput) status.setText(sink ? "No output selected. The current route remains active; use Disconnect to close it."
+            : "Choose an output device, then press Connect.",juce::dontSendNotification);
+        else if (staged) status.setText(sink ? "Port choices changed. Press Apply ports to switch; the current route is still active."
+            : "Port selected. Press Connect to enable MIDI output.",juce::dontSendNotification);
+        else if (sink) status.setText("Connected: " + outputs.getText(),juce::dontSendNotification);
+    }
     void connectSelected() {
         const auto desiredInput = selectedIdentifier(inputs,inputDevices);
         const auto desiredOutput = selectedIdentifier(outputs,outputDevices);
@@ -302,6 +318,7 @@ private:
             activeInput = desiredInput;
             input->start();
         }
+        connect.setButtonText("Connect");
         status.setText("Connected: " + outputs.getText() + ". Avoid MIDI echo/THRU loops.",juce::dontSendNotification);
     }
     void disconnectPorts(const juce::String& reason) {
@@ -313,6 +330,7 @@ private:
         session.setOutput(nullptr); // Sends Note Offs and bend centre while sink is alive.
         sink.reset();
         activeInput.clear(); activeOutput.clear();
+        connect.setButtonText("Connect");
         bend.setValue(8192,juce::dontSendNotification);
         if (reason.isNotEmpty()) status.setText(reason,juce::dontSendNotification);
     }
@@ -364,7 +382,10 @@ private:
         clockState.setText(sink && sink->clockRunning() ? "Clock: internal master running (24 PPQN)" : juce::String::fromUTF8("Clock: stopped — incoming clock is not forwarded"),juce::dontSendNotification);
         juce::MidiBuffer unused;
         keys.processNextMidiBuffer(unused,0,1,false); // Clear keyboard's indirect-event history.
-        voices.setText(juce::String(session.activeVoices()) + " / 4 voices",juce::dontSendNotification);
+        voiceDisplay.update(session.activeVoices(),session.rejectionCount(),session.lastRejection());
+        disconnect.setEnabled(sink != nullptr);
+        const bool canConnect = selectedIdentifier(outputs,outputDevices).isNotEmpty();
+        connect.setEnabled(canConnect);
         const bool connected = sink != nullptr;
         if (connected != lastConnection) { lastConnection = connected; repaint(); }
         if (++polls == 200) { polls = 0; refreshPorts(); }
@@ -389,6 +410,8 @@ private:
     juce::TextButton start,stop;
     juce::Label clockState;
     juce::Label rootLabel,transposeLabel;
+    e4::ui::VoiceDisplay voiceDisplay;
+    juce::TooltipWindow tooltips {this,600};
     std::array<juce::TextButton,4> pads;
     juce::TextButton connect,disconnect,refresh,panic;
     int polls = 0;

@@ -1,4 +1,5 @@
 #include "MidiEngine.h"
+#include "NoteNames.h"
 #include "MidiSession.h"
 #include "ChordPads.h"
 #include "PerformanceQueue.h"
@@ -220,6 +221,30 @@ int main() {
     for (int note = 60; note < 64; ++note) rejectedNotes.process(0x90,note,100,emit);
     for (int count = 0; count < 65536; ++count) rejectedNotes.process(0x90,64,100,emit);
     check(rejectedNotes.activeVoices() == 0,"rejected counter saturation also cleans up held notes");
+    for (int note = 0; note < 128; ++note) {
+        const auto parsed = e4::parseNote(e4::noteLabel(note));
+        check(parsed && *parsed == note,"all displayed note labels round-trip to the original MIDI value");
+    }
+    check(e4::noteLabel(60) == "C4 (60)" && e4::parseNote("Db4") == 61 && e4::parseNote("c#4") == 61
+        && e4::parseNote("C-1") == 0 && e4::parseNote("G9") == 127,"musical names, flats and MIDI endpoints");
+    check(e4::parseNote(" 60 ") == 60 && e4::parseNote("B#3") == 60 && e4::parseNote("Cb4") == 59,
+          "numeric entry and enharmonic spellings");
+    for (auto invalid : {"", "C4 (61)", "C4junk", "H4", "128", "-1", "C10", "C99999999999", "()"})
+        check(!e4::parseNote(invalid),"invalid or contradictory note labels rejected");
+    e4::MidiEngine feedback;
+    events.clear();
+    for (int note = 60; note < 65; ++note) feedback.process(0x90,note,100,emit);
+    check(feedback.rejectionCount() == 1 && feedback.lastRejection() == e4::MidiEngine::Rejection::voiceLimit,
+          "voice-limit feedback identifies a rejected press");
+    feedback.process(0x80,64,0,emit);
+    feedback.panic(emit);
+    check(feedback.rejectionCount() == 1,"releases and panic do not generate false rejection flashes");
+    feedback.setTranspose(24,emit);
+    events.clear();
+    feedback.process(0x90,120,100,emit);
+    feedback.process(0x80,120,0,emit);
+    check(feedback.rejectionCount() == 2 && feedback.lastRejection() == e4::MidiEngine::Rejection::outOfRange
+        && events.empty(),"out-of-range feedback is separate from voice limit and emits no invalid MIDI");
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }
