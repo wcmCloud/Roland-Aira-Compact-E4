@@ -7,7 +7,7 @@
 - Ownership stays indexed by original input note/channel/source while physical references use the scaled/transposed output pitch. Mapping settings remain constant for each hold; changing any scale setting explicitly releases old mappings before replacing settings. Pitch bend and raw input highlights are unaffected by note quantisation.
 - Chord-bank previews include scale processing captured at editor opening and identify filtered/merged notes. Scale precedes global transpose; .e4bank remains a chord-only format. Standalone remembers scale settings; schema-5 plug-in state embeds/automates them and migrates schemas 1–4 with processing Off.
 - Added exhaustive independent-oracle checks for every scale/key/mode across MIDI 0–127, collision/repeat/channel ownership, source cleanup, transpose order, rejection feedback, automation, invalid state and migration. Actual VST3 wrapper tests now cover scale parameter exposure, note/release timing, rejection and state recall.
-- All seven CTest checks and core ASan/UBSan pass; Debug standalone/AU/VST3 rebuilt and native previews visually reviewed. Physical E-4, Live automation/routing and interactive acceptance remain open. P3 arpeggiator/scheduler is next.
+- All seven CTest checks and core ASan/UBSan pass; Debug standalone/AU/VST3 rebuilt and native previews visually reviewed. Physical E-4, Live automation/routing and interactive acceptance remain open. P3/P4 generators are deferred by user decision; routing/hardware acceptance and P5 controller mappings take priority.
 
 
 ### Performance expansion: P1 chord banks (24 October 2026)
@@ -216,7 +216,9 @@ Exit P1: both interfaces can edit/save/load the same bank; factory behaviour and
 
 Exit P2: exhaustive 128-note tests for each scale/mode and tonic, ties and boundaries; overlap/collision and repeated-release regressions; clear input-versus-output display. Confirm hardware AUTO PITCH remains a manual setting.
 
-### P3 — arpeggiator and shared musical scheduler
+### P3 — arpeggiator and shared musical scheduler (deferred)
+
+User decision, 24 October 2026: keep the arpeggiator, its new musical scheduler and P4 sequencer for later. The strongest future use case is standalone; a plug-in implementation should follow host tempo/transport and reuse the shared core. Existing standalone MIDI clock remains available. Do not start these deferred features on a generic continue request.
 
 - Add Up, Down, Up/Down (no repeated endpoints), As Played, then deterministic Random; octave span, tempo division (quarter/eighth/sixteenth and triplets), gate, velocity and optional latch. Emit one arp note at a time initially. Keep chord pads/direct performance available within the shared voice limit.
 - VST3 uses host PPQ, tempo and transport to schedule notes at within-block sample offsets. It does not emit raw MIDI clock. If timing/playhead data is unavailable, stop generated notes and display the reason. Stop, seek, loop wrap and mode changes release pending notes and restart at a documented grid boundary; tempo changes preserve beat position. Random playback uses a stored seed/reset policy for repeatable host playback.
@@ -225,7 +227,7 @@ Exit P2: exhaustive 128-note tests for each scale/mode and tonic, ties and bound
 
 Exit P3: golden event timelines across 44.1/48/96 kHz and 32–1024-sample blocks, tempo changes, loop/seek, repeated input, latch and random reset; no cumulative scheduling drift in simulation. Capture real standalone timing under load and record the E-4 output in Live. Report measured jitter separately from calculated timing.
 
-### P4 — note sequencer
+### P4 — note sequencer (deferred)
 
 - Reuse P3 scheduling for an initial 16-step pattern with per-step rest or one-to-four-note chord, velocity, gate and tie. Add step length, pattern length 1–16 and a visible playhead. Defer probability, microtiming and multiple concurrent lanes until basic playback is proven.
 - Direct, Arp and Sequence are mutually exclusive modes for the generated lane in the first release; direct/manual sources remain separately owned. A tie extends a matching owned pitch without retriggering it; removed pitches receive Note Offs before replacement notes. No step can claim more than four distinct pitches.
@@ -252,7 +254,7 @@ Exit P6: a new user can reproduce a saved setup from the guide, distinguish auto
 
 ### Expansion milestones and release acceptance
 
-Delivery order: P0 foundation → P1 chord banks/inversions → P2 scales → P3 arp/scheduler → P4 sequencer → P5 mappings → P6 guides. A basic setup checklist can accompany P1; complete patch sheets follow the final preset schema. Each phase is a reviewable working increment in standalone and VST3, with screenshots, meaningful regression coverage and updated quick-start instructions. AU retains its existing experimental output limitation until the separate AU workflow gate is passed.
+Updated priority: complete routing/hardware acceptance alongside P5 controller mappings/MIDI learn, then P6 guides. P0 foundation, P1 chord banks/inversions and P2 scales have software implementations; their remaining manual acceptance still applies. P3 arp/scheduler and P4 sequencer are deferred until the user resumes them. P5 can ship mappings for existing pads, transpose, inversion, pitch bend and Panic independently; generator/latch actions wait for P3/P4. A basic setup checklist can accompany P1; complete patch sheets follow the final preset schema. Each phase is a reviewable working increment in standalone and VST3, with screenshots, meaningful regression coverage and updated quick-start instructions. AU retains its existing experimental output limitation until the separate AU workflow gate is passed.
 
 For every increment, exercise Panic, matching input/UI notes, channel/transpose changes, editor close, stop/bypass, unplug/reconnect, queue overload and older-project restore. Check generated event counts and timing with software tests, then validate audible behaviour and cleanup on the physical E-4 and in Live. Keep simulated timing, wrapper checks and physical acceptance recorded separately. Existing hotplug/sleep, host validation, licensing and distribution tasks remain outstanding; this roadmap does not mark them complete. Estimates follow P0 and hardware/host feasibility; do not promise dates before those risks are measured.
 

@@ -171,7 +171,7 @@ Applying a bank releases existing pad notes and waits for a fresh press; externa
 
 Standalone remembers the active bank when closed normally. Plug-in schema 5 embeds the complete bank in the host project; no external bank file is needed to reopen it. Each pad exposes **inversion** and **octave** host parameters; inversion automation above the available chord voices clamps to the highest valid inversion. Changing these parameters releases pad notes without automatically replaying them. Existing channel/root/transpose parameter IDs are preserved. Factory migration does not replay held notes.
 
-Names currently use printable ASCII (24 characters maximum); banks contain app settings, not E-4 hardware presets. Arpeggiator, sequencer and controller mappings remain planned. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
+Names currently use printable ASCII (24 characters maximum); banks contain app settings, not E-4 hardware presets. Arpeggiator and sequencer are deferred for later. Controller mappings/MIDI learn and routing/hardware acceptance are the next priorities. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
 
 ## Key and scale filtering
 
