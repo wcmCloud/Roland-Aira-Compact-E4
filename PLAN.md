@@ -161,6 +161,75 @@ Build native arm64 first; add x86_64/universal only after validation. Run AU val
 
 Exit M6: signed packages, recorded hardware regression results and a reproducible release checklist. No claim of a knob editor, E-4 emulation, hardware preset backup or guaranteed sample-accurate external hardware timing.
 
+## MIDI performance expansion roadmap (planned, 24 October 2026)
+
+This roadmap covers the remaining agreed additions: custom chord banks, inversions, scale/key filtering, arpeggiator, note sequencer, controller mappings, and hardware setup guides with patch notes. Audio monitoring, recording and effects remain in Ableton or another audio host; built-in audio effects are outside this expansion. These are app features using the documented v1.02 MIDI messages, not new hardware parameter controls. Existing hardware/Ableton acceptance and release gates above remain required.
+
+### P0 — shared performance foundation
+
+Before adding generators, extract shared musical settings and processing from the two front ends. Define stable slot IDs, a versioned performance-preset format, bounded immutable runtime snapshots and source ownership for live input, screen keys, each pad, arpeggiator and sequencer. The current engine supports only six sources (host/input plus keyboard and four pads); expand and test this deliberately before introducing more pads or generators. Keep event processing bounded and free of device calls, file access, locks and allocations on the audio thread. Load/save and validate presets away from that thread.
+
+Define one pipeline: input capture → controller mapping → scale transform → selected direct/arp/sequence mode → shared transpose/channel/four-voice allocator → output. Pitch bend bypasses note quantisation. Preserve original input highlights and optionally show generated output separately. Each accepted Note On owns a recorded output pitch until its corresponding release; changing settings must release old pitches, never reinterpret their Note Offs. Generators share the four-voice budget with direct input; preserve the current reject-fifth policy and show rejection feedback. Start generators disabled and restore no sounding notes.
+
+Exit P0: existing seven checks still pass; ownership tests cover generated/direct overlaps, cancellation, queue overflow and state migration. Document input/output ordering and cleanup rules before building the new controls.
+
+### P1 — custom chord pads, inversions and banks
+
+- Keep existing four factory pads as the initial bank. Add editable names and one to four unique semitone offsets per pad, relative to the root. Provide major/minor/sus/diminished/augmented/seventh templates, bounded inversion selection and octave placement. Preview resulting note names and reject invalid/out-of-range voicings rather than silently changing them.
+- Ship momentary pads first. Editing a sounding pad, changing root/inversion/bank, or replacing a preset releases that pad's original notes without automatically replaying them. Other owners of matching pitches continue sounding. Defer toggle/latch until its explicit stop and cleanup behaviour is implemented with P3.
+- Store named banks in a versioned app-preset file and embed the active bank in plug-in state so Live projects reopen independently of external files. Use stable IDs and bounded sizes; validate imports, handle older schemas, and reject unsupported future schemas without replacing the current bank. File operations occur outside processing.
+- Expose only stable numeric controls to host automation (root, slot inversion and octave); retain existing parameter IDs. Do not automate text or an entire bank payload. Imported content never sends hardware program changes.
+
+Exit P1: both interfaces can edit/save/load the same bank; factory behaviour and old sessions migrate correctly. Tests cover every inversion, duplicate offsets, MIDI boundaries, invalid files, held-pad editing, overlapping pads and restore without note replay. Demonstrate a saved/reopened Live project and a four-note E-4 chord.
+
+### P2 — key/scale tools
+
+- Add chromatic bypass, tonic and an initial scale set (major, natural minor, major/minor pentatonic), with explicit Off, Reject and Nearest modes. Nearest uses a documented lower-note tie break and searches only MIDI 0–127. Keep this feature separate from the E-4's physical AUTO PITCH/key settings: it transforms MIDI notes, not microphone audio.
+- Default to direct incoming notes; offer explicit inclusion for pads and sequence notes. Arpeggiator input is transformed before its held-note pool is built. Show transformed voicings and pitch collisions; merged pitches use reference-counted ownership.
+- Retain the input-to-output mapping for every hold, including repeated notes and different channels. A scale/mode change releases affected owners and clears generator pools before accepting fresh notes, rather than retuning held notes unexpectedly. Transpose follows the scale transform, so non-octave transpose may move results outside the chosen scale; disclose this in the UI.
+
+Exit P2: exhaustive 128-note tests for each scale/mode and tonic, ties and boundaries; overlap/collision and repeated-release regressions; clear input-versus-output display. Confirm hardware AUTO PITCH remains a manual setting.
+
+### P3 — arpeggiator and shared musical scheduler
+
+- Add Up, Down, Up/Down (no repeated endpoints), As Played, then deterministic Random; octave span, tempo division (quarter/eighth/sixteenth and triplets), gate, velocity and optional latch. Emit one arp note at a time initially. Keep chord pads/direct performance available within the shared voice limit.
+- VST3 uses host PPQ, tempo and transport to schedule notes at within-block sample offsets. It does not emit raw MIDI clock. If timing/playhead data is unavailable, stop generated notes and display the reason. Stop, seek, loop wrap and mode changes release pending notes and restart at a documented grid boundary; tempo changes preserve beat position. Random playback uses a stored seed/reset policy for repeatable host playback.
+- Standalone uses the same beat/event planner driven by monotonic time and app tempo, with timestamped dispatch on the dedicated sender. Do not drive musical timing from the 5 ms UI timer. Internal hardware clock is a separate explicit option using the same tempo; external MIDI clock-follow is a later extension, with loss-of-clock cleanup and no clock echo, rather than an assumed dependency.
+- Distinguish note latch from hardware sustain. CC64 may control app latch later but is never forwarded as hardware sustain. Panic, stop, disconnect, bypass and preset restore clear latch, queued events and sounding notes. Editor closure releases UI-owned/latch notes; host-owned notes follow existing ownership rules.
+
+Exit P3: golden event timelines across 44.1/48/96 kHz and 32–1024-sample blocks, tempo changes, loop/seek, repeated input, latch and random reset; no cumulative scheduling drift in simulation. Capture real standalone timing under load and record the E-4 output in Live. Report measured jitter separately from calculated timing.
+
+### P4 — note sequencer
+
+- Reuse P3 scheduling for an initial 16-step pattern with per-step rest or one-to-four-note chord, velocity, gate and tie. Add step length, pattern length 1–16 and a visible playhead. Defer probability, microtiming and multiple concurrent lanes until basic playback is proven.
+- Direct, Arp and Sequence are mutually exclusive modes for the generated lane in the first release; direct/manual sources remain separately owned. A tie extends a matching owned pitch without retriggering it; removed pitches receive Note Offs before replacement notes. No step can claim more than four distinct pitches.
+- Edit using validated snapshots applied at the next step boundary. Mode/pattern replacement releases pending and active generated notes; no stale event survives a stop or preset load. Embed patterns in app/plug-in state and reuse the bank import/export validation. Do not implement E-4 looper record/overdub/clear commands: this is a MIDI note sequencer.
+
+Exit P4: timeline tests for rests, ties, mixed-length chords, pattern wrap, live edits, transport discontinuities and shared voice saturation. Save/reopen a Live set with the same silent-until-play pattern and record at least one full pattern on the E-4.
+
+### P5 — controller mappings and MIDI learn
+
+- Map incoming channel-specific or omni notes/CCs to pad press/release, transpose, inversion, arp/sequence enable, latch, Panic and pitch bend. Add fixed 0–127-to-14-bit scaling for a CC assigned to bend, with configurable centre/deadband; retain normal incoming pitch bend. MIDI learn captures a control without triggering its action; finishing learn requires a fresh gesture.
+- Provide an explicit Consume/Pass-through choice for mapped notes (default Consume). Track note triggers through matching releases regardless of later mapping edits. Support momentary actions via press/release and toggles via rising-edge thresholds with hysteresis; repeated CC values must not repeatedly toggle. Conflict detection prevents a single input from unintentionally triggering several destructive actions.
+- CCs are interpreted locally and remain filtered from E-4 output. Mapped controls change bounded performance state on the processing thread and publish feedback to the UI; avoid calling host-notification APIs from arbitrary real-time callbacks. Host automation wins if both sources change the same value at the same timestamp; document this precedence.
+- Save mappings per preset, with an optional standalone default profile. No automatic output connection, bank replay or performance action on profile restore. VST3 CC delivery varies by host/wrapper: prove Live delivery for each supported control; otherwise document Live's host parameter-mapping workflow. Do not promise that every hardware CC reaches the plug-in.
+
+Exit P5: mapping learn/cancel, thresholds, repeated values, channel filters, conflicts, consumed notes, mapping edits while held and preset migration pass. Verify the user's keyboard in standalone and actual Live VST3 routing with a MIDI monitor.
+
+### P6 — hardware setup guides and patch notes
+
+- Add an in-app setup checklist for VOCODER, KEY IN, HARMONY, channel and clock source, plus the tested Ableton MIDI-send/audio-return routing recipe. Include concise manual references and physical button combinations where verified.
+- Allow a performance preset to carry manual notes for formant, pitch, reverb amount/type, carrier and other physical settings. Mark all such values as user-entered reminders, never live hardware readings or commands. Show setup reminders on demand without interrupting playback.
+- Provide a compact printable/exportable text patch sheet containing the app bank/pattern settings and the manual hardware checklist. Do not imply hardware preset backup/restore or automatic matching. No external account or ChatGPT integration is required.
+
+Exit P6: a new user can reproduce a saved setup from the guide, distinguish automated MIDI values from manual reminders, and route audio through an Ableton reverb without needing app audio processing.
+
+### Expansion milestones and release acceptance
+
+Delivery order: P0 foundation → P1 chord banks/inversions → P2 scales → P3 arp/scheduler → P4 sequencer → P5 mappings → P6 guides. A basic setup checklist can accompany P1; complete patch sheets follow the final preset schema. Each phase is a reviewable working increment in standalone and VST3, with screenshots, meaningful regression coverage and updated quick-start instructions. AU retains its existing experimental output limitation until the separate AU workflow gate is passed.
+
+For every increment, exercise Panic, matching input/UI notes, channel/transpose changes, editor close, stop/bypass, unplug/reconnect, queue overload and older-project restore. Check generated event counts and timing with software tests, then validate audible behaviour and cleanup on the physical E-4 and in Live. Keep simulated timing, wrapper checks and physical acceptance recorded separately. Existing hotplug/sleep, host validation, licensing and distribution tasks remain outstanding; this roadmap does not mark them complete. Estimates follow P0 and hardware/host feasibility; do not promise dates before those risks are measured.
+
 ## Test strategy
 
 - Core: note-on velocity zero, note boundaries, channel mapping, overlapping ownership, four-note limit, fifth-note decision, stealing/releasing order, bend endpoints/centre, filtered-message interactions and panic idempotency. Specifically prove filtering a CC does not discard a valid Note Off in the same block.
