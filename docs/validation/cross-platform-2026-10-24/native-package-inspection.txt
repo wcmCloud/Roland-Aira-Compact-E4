@@ -1,0 +1,12 @@
+E4-Companion-0.1.0-Linux-arm64.tar.gz
+  SHA-256 verified; install helper present
+  ELF 64-bit LSB pie executable, ARM aarch64, version 1 (GNU/Linux), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=973d760ebe474589a2d3a608064c12988e5c6982, for GNU/Linux 3.7.0, not stripped
+E4-Companion-0.1.0-Linux-x64.tar.gz
+  SHA-256 verified; install helper present
+  ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=7ab3f388210e71bb536776fd2af7d2312e828162, for GNU/Linux 3.2.0, not stripped
+E4-Companion-0.1.0-Windows-arm64.zip
+  SHA-256 verified; install helper present
+  PE32+ executable (GUI) Aarch64, for MS Windows
+E4-Companion-0.1.0-Windows-x64.zip
+  SHA-256 verified; install helper present
+  PE32+ executable (GUI) x86-64, for MS Windows

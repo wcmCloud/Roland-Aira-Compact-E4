@@ -1,0 +1,12 @@
+build (macos-15, macOS, arm64)	Tests Unix desktop and Windows	2026-10-24T19:08:52.7601900Z 100% tests passed out of 8
+build (macos-15, macOS, arm64)	Tests Unix desktop and Windows	2026-10-24T19:08:52.7602430Z Total Test time (real) =   0.34 sec
+build (macos-15-intel, macOS, x64)	Tests Unix desktop and Windows	2026-10-24T19:14:38.4060330Z 100% tests passed out of 8
+build (macos-15-intel, macOS, x64)	Tests Unix desktop and Windows	2026-10-24T19:14:38.4060980Z Total Test time (real) =   0.32 sec
+build (windows-11-arm, Windows, arm64, ARM64)	Tests Unix desktop and Windows	2026-10-24T19:11:38.9819998Z 100% tests passed out of 8
+build (windows-11-arm, Windows, arm64, ARM64)	Tests Unix desktop and Windows	2026-10-24T19:11:38.9820294Z Total Test time (real) =   0.36 sec
+build (windows-2022, Windows, x64, x64)	Tests Unix desktop and Windows	2026-10-24T19:12:24.8020488Z 100% tests passed, 0 tests failed out of 8
+build (windows-2022, Windows, x64, x64)	Tests Unix desktop and Windows	2026-10-24T19:12:24.8020856Z Total Test time (real) =   0.19 sec
+build (ubuntu-24.04, Linux, x64)	Tests Linux	2026-10-24T19:12:24.3406581Z 100% tests passed, 0 tests failed out of 8
+build (ubuntu-24.04, Linux, x64)	Tests Linux	2026-10-24T19:12:24.3406907Z Total Test time (real) =   0.24 sec
+build (ubuntu-24.04-arm, Linux, arm64)	Tests Linux	2026-10-24T19:10:59.3319765Z 100% tests passed, 0 tests failed out of 8
+build (ubuntu-24.04-arm, Linux, arm64)	Tests Linux	2026-10-24T19:10:59.3320414Z Total Test time (real) =   0.20 sec

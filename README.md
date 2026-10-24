@@ -73,7 +73,13 @@ Installer, standalone and settings images are captures of the running macOS wind
 
 ## Getting started
 
-The current **0.1.0 studio preview** has a signed, Apple-notarised **universal Mac DMG (Apple Silicon and Intel)**. It is generated locally under `build-packages/0.1.0-universal/`; it has not been published as a GitHub release. See [packaging instructions](packaging/README.md) to reproduce it. Published downloads, when available, will be on the [releases page](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases).
+Download the [**0.1.0 studio preview**](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases/tag/v0.1.0):
+
+- **macOS Intel and Apple Silicon:** signed, Apple-notarised universal DMG with graphical installer, standalone, VST3 and AU.
+- **Windows x64 / ARM64:** unsigned portable ZIPs with standalone, VST3 and a per-user installation helper.
+- **Linux x64 / ARM64:** archives with standalone, VST3 and a per-user installer/application-menu entry; Ubuntu 24.04 or compatible libraries required.
+
+All six native builds passed eight automated test cases each. Windows/Linux installation and physical E-4/DAW acceptance remain studio checks. Each package includes licences and corresponding source; a separate full source archive and SHA-256 checksums are also available. See [packaging instructions](packaging/README.md) to reproduce the builds.
 
 1. Quit Live and other audio hosts. Open the DMG and launch **E-4 Installer**.
 2. Select VST3, Audio Unit and/or standalone. The graphical installer uses your user plug-in folders and `~/Applications`, preserving earlier copies in `~/Library/Application Support/E-4 Companion/Installer Backups`.
@@ -146,7 +152,7 @@ Four-note hardware playback was confirmed by the user. Audible bend, physical-co
 
 [Native build results](https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/workflows/release.yml) cover macOS Apple Silicon/Intel, Windows x64/ARM64 and Linux x64/ARM64. A successful build verifies compilation and automated MIDI/processor/VST3 tests; physical hardware and DAW acceptance remain separate checks. AU is macOS-only. Choose the architecture matching your DAW.
 
-The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs are unsigned development builds; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
+The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs remain unsigned development builds in Actions; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
 
 To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft prerelease. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.
 

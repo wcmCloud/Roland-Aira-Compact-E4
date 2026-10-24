@@ -1,0 +1,10 @@
+E4-Companion-0.1.0-Linux-arm64.tar.gz: checksum, native architecture, helper, licences and sources verified
+  ELF 64-bit LSB pie executable, ARM aarch64, version 1 (GNU/Linux), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=955c85b8453396aaf9965a34e7156709ef4c6459, for GNU/Linux 3.7.0, not stripped
+E4-Companion-0.1.0-Linux-x64.tar.gz: checksum, native architecture, helper, licences and sources verified
+  ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=d443d0fb8aae6e0b55ac50c9d6178b0a0f136986, for GNU/Linux 3.2.0, not stripped
+E4-Companion-0.1.0-Windows-arm64.zip: checksum, native architecture, helper, licences and sources verified
+  PE32+ executable (GUI) Aarch64, for MS Windows
+E4-Companion-0.1.0-Windows-x64.zip: checksum, native architecture, helper, licences and sources verified
+  PE32+ executable (GUI) x86-64, for MS Windows
+E4-Companion-0.1.0-macOS-universal.dmg: SHA-256 verified
+E4-Companion-0.1.0-source.tar.gz: SHA-256 verified
