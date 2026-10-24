@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Original E-4 companion mark: microphone, four voices and compact hardware.
+       Matches the T-8 app's metallic enclosure; no manufacturer logos. -->
+  <defs>
+    <linearGradient id="body" x2="0" y2="1"><stop stop-color="#686b72"/><stop offset="1" stop-color="#30333a"/></linearGradient>
+    <linearGradient id="rim" x2="0" y2="1"><stop stop-color="#d3d8e0" stop-opacity=".55"/><stop offset="1" stop-color="#aab0bc" stop-opacity=".08"/></linearGradient>
+    <radialGradient id="cap" cx=".36" cy=".26" r=".8"><stop stop-color="#686d77"/><stop offset=".6" stop-color="#292d35"/><stop offset="1" stop-color="#15181e"/></radialGradient>
+    <linearGradient id="mic" x2=".7" y2="1"><stop stop-color="#f0ffe1"/><stop offset=".45" stop-color="#c8f97b"/><stop offset="1" stop-color="#83c642"/></linearGradient>
+    <linearGradient id="panel" x2="0" y2="1"><stop stop-color="#161d24"/><stop offset="1" stop-color="#252c34"/></linearGradient>
+    <linearGradient id="pad" x2="0" y2="1"><stop stop-color="#d7ff9c"/><stop offset="1" stop-color="#91cc46"/></linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="13"/></filter>
+  </defs>
+  <rect x="100" y="118" width="824" height="824" rx="185" fill="#000" opacity=".42" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#body)" stroke="#1b1e25" stroke-width="6"/>
+  <rect x="114" y="114" width="796" height="796" rx="172" fill="none" stroke="url(#rim)" stroke-width="4"/>
+  <g stroke="#13171c" stroke-width="3">
+    <circle cx="245" cy="267" r="55" fill="#c3f46f"/>
+    <circle cx="423" cy="267" r="55" fill="#64dfce"/>
+    <circle cx="601" cy="267" r="55" fill="#b9a2ef"/>
+    <circle cx="779" cy="267" r="55" fill="#efc577"/>
+    <circle cx="245" cy="267" r="40" fill="url(#cap)"/>
+    <circle cx="423" cy="267" r="40" fill="url(#cap)"/>
+    <circle cx="601" cy="267" r="40" fill="url(#cap)"/>
+    <circle cx="779" cy="267" r="40" fill="url(#cap)"/>
+  </g>
+  <g stroke="#f0f4f7" stroke-width="7" stroke-linecap="round">
+    <path d="M235 237l6 17M413 237l6 17M591 237l6 17M769 237l6 17"/>
+  </g>
+  <rect x="171" y="365" width="682" height="329" rx="46" fill="#141a20" opacity=".5"/>
+  <rect x="171" y="357" width="682" height="329" rx="46" fill="url(#panel)" stroke="#1a1d23" stroke-width="4"/>
+  <rect x="431" y="395" width="162" height="219" rx="81" fill="#aaf35f" opacity=".25" filter="url(#glow)"/>
+  <rect x="431" y="391" width="162" height="219" rx="81" fill="url(#mic)"/>
+  <g stroke="#4d7331" stroke-width="9" stroke-linecap="round" opacity=".75">
+    <path d="M480 431h64M468 459h88M468 487h88M468 515h88M480 543h64"/>
+  </g>
+  <path d="M400 525v11a112 112 0 00224 0v-11M512 648v-21M473 648h78" fill="none" stroke="#d6e8cf" stroke-width="16" stroke-linecap="round"/>
+  <g fill="none" stroke="#74dec9" stroke-width="13" stroke-linecap="round">
+    <path d="M323 466a77 77 0 000 109M285 431a126 126 0 000 179"/>
+    <path d="M701 466a77 77 0 010 109M739 431a126 126 0 010 179"/>
+  </g>
+  <g stroke="#1d2229" stroke-width="4">
+    <rect x="218" y="745" width="126" height="84" rx="17" fill="#0c1117" opacity=".5"/>
+    <rect x="372" y="745" width="126" height="84" rx="17" fill="#0c1117" opacity=".5"/>
+    <rect x="526" y="745" width="126" height="84" rx="17" fill="#0c1117" opacity=".5"/>
+    <rect x="680" y="745" width="126" height="84" rx="17" fill="#0c1117" opacity=".5"/>
+    <rect x="218" y="737" width="126" height="84" rx="17" fill="url(#pad)"/>
+    <rect x="372" y="737" width="126" height="84" rx="17" fill="#68d8c9"/>
+    <rect x="526" y="737" width="126" height="84" rx="17" fill="#b6a0e9"/>
+    <rect x="680" y="737" width="126" height="84" rx="17" fill="#e8bd73"/>
+  </g>
+  <g fill="#26343d"><circle cx="281" cy="779" r="9"/><circle cx="435" cy="779" r="9"/><circle cx="589" cy="779" r="9"/><circle cx="743" cy="779" r="9"/></g>
+</svg>

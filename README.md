@@ -209,4 +209,8 @@ Apple AU validation and Steinberg VST3 validation pass (47 VST3 checks, zero fai
 
 ## macOS installer
 
-Release packaging now creates a VST3/AU/standalone choice-based PKG and a signed, notarized DMG with a user-folder installer. See [packaging and notarization](packaging/README.md). The current Mac produces Apple Silicon builds; Windows/Linux need native builds and separate installers. The PKG remains explicitly unsigned until a Developer ID Installer certificate is available.
+Release packaging now creates a VST3/AU/standalone choice-based PKG and a signed, notarized DMG with a graphical user-folder installer. See [packaging and notarization](packaging/README.md). The current Mac produces Apple Silicon builds; Windows/Linux need native builds and separate installers. The PKG remains explicitly unsigned until a Developer ID Installer certificate is available.
+
+## Studio handoff
+
+The notarized DMG includes a [studio test kit](docs/studio/START-HERE.md), a separate Live acceptance set, three short MIDI fixtures, a result sheet and a signed receive-only MIDI diagnostic tool. [Release preflight results](docs/validation/studio-preflight-2026-10-24/README.md) distinguish the verified Live/software paths from remaining audible hardware checks.

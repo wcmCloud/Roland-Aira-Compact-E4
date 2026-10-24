@@ -96,11 +96,13 @@ int main(int argc,char** argv) {
     }
     if (argc == 2 && juce::String(argv[1]) == "--help") {
         std::cout << "e4_midi_probe --list\ne4_midi_probe --capture INPUT_IDENTIFIER --seconds 1..600\n"
+                     "e4_midi_probe --virtual PORT_NAME --seconds 1..600\n"
                      "Capture is receive-only. JSON goes to standard output. No MIDI output is opened.\n";
         return 0;
     }
-    if (argc != 5 || juce::String(argv[1]) != "--capture" || juce::String(argv[3]) != "--seconds")
-        return fail("Use --list or --capture INPUT_IDENTIFIER --seconds 1..600");
+    const bool virtualPort = argc > 1 && juce::String(argv[1]) == "--virtual";
+    if (argc != 5 || (!virtualPort && juce::String(argv[1]) != "--capture") || juce::String(argv[3]) != "--seconds")
+        return fail("Use --list, --capture INPUT_IDENTIFIER or --virtual PORT_NAME with --seconds 1..600");
     const juce::String secondsText(argv[4]);
     if (secondsText.isEmpty() || !secondsText.containsOnly("0123456789")) return fail("Seconds must be an integer in 1..600");
     const auto seconds = secondsText.getLargeIntValue();
@@ -108,14 +110,17 @@ int main(int argc,char** argv) {
     const juce::String identifier(argv[2]);
     int matches = 0;
     for (const auto& device : juce::MidiInput::getAvailableDevices()) if (device.identifier == identifier) ++matches;
-    if (matches != 1) return fail("Input identifier is absent or ambiguous; run --list again");
+    if (identifier.isEmpty()) return fail("Port name/identifier must not be empty");
+    if (!virtualPort && matches != 1) return fail("Input identifier is absent or ambiguous; run --list again");
     Capture capture;
-    auto input = juce::MidiInput::openDevice(identifier,&capture);
+    auto input = virtualPort ? juce::MidiInput::createNewDevice(identifier,&capture)
+                             : juce::MidiInput::openDevice(identifier,&capture);
     if (!input) return fail("Could not open selected MIDI input");
     const double begin = juce::Time::getMillisecondCounterHiRes();
     input->start();
+    std::cerr << "Receiving on " << identifier << " for " << seconds << " seconds\n";
     juce::Thread::sleep(static_cast<int>(seconds*1000));
     input->stop(); input.reset(); // Quiesce callbacks before serialising the result.
-    print(capture.report(identifier,(juce::Time::getMillisecondCounterHiRes()-begin)/1000.0));
+    print(capture.report(virtualPort ? "virtual:"+identifier : identifier,(juce::Time::getMillisecondCounterHiRes()-begin)/1000.0));
     return 0;
 }

@@ -1,5 +1,7 @@
 # macOS installer verification — 24 October 2026
 
+Historical first installer build. The final icon-bearing graphical installer and notarized studio handoff are recorded in [studio preflight](../studio-preflight-2026-10-24/README.md); use that record and its final checksums.
+
 Release 0.1.0, native arm64. Artifacts remain in ignored build-packages/0.1.0-arm64.
 
 - Release VST3: official Steinberg validator reports 47 passed, zero failed.

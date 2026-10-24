@@ -46,6 +46,8 @@ juce_add_plugin(AiraE4
     IS_MIDI_EFFECT FALSE COPY_PLUGIN_AFTER_BUILD FALSE
     MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "Audio device access for the E-4 companion."
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-1024.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-256.png"
     VST3_CATEGORIES Instrument Tools)
 target_sources(AiraE4 PRIVATE Source/PluginProcessor.cpp Source/PluginProcessor.h)
 target_compile_definitions(AiraE4 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
@@ -53,12 +55,24 @@ target_link_libraries(AiraE4 PRIVATE juce::juce_audio_utils PUBLIC juce::juce_re
 
 # Dedicated MIDI-only app: does not open or require an audio device.
 juce_add_gui_app(AiraE4_Standalone
-    PRODUCT_NAME "E-4 Companion" COMPANY_NAME "Chris" BUNDLE_ID "com.chris.aira-e4.standalone")
+    PRODUCT_NAME "E-4 Companion" COMPANY_NAME "Chris" BUNDLE_ID "com.chris.aira-e4.standalone"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-1024.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-256.png")
 target_sources(AiraE4_Standalone PRIVATE Source/StandaloneMain.cpp)
 set_target_properties(AiraE4_Standalone PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AiraE4_artefacts/$<CONFIG>/Standalone")
 target_link_libraries(AiraE4_Standalone PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 target_compile_definitions(AiraE4_Standalone PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+
+if(APPLE)
+    juce_add_gui_app(e4_installer PRODUCT_NAME "E-4 Installer" COMPANY_NAME "Chris"
+        BUNDLE_ID "com.chris.aira-e4.installer"
+        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-1024.png"
+        ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-256.png")
+    target_sources(e4_installer PRIVATE Tools/InstallerMain.cpp)
+    target_compile_definitions(e4_installer PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+    target_link_libraries(e4_installer PRIVATE juce::juce_gui_basics juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+endif()
 
 juce_add_console_app(e4_midi_probe PRODUCT_NAME "E4 MIDI Probe")
 target_sources(e4_midi_probe PRIVATE Tools/MidiProbe.cpp)

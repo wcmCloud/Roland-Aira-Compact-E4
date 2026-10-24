@@ -65,13 +65,37 @@ for fmt, name, target, label in entries:
 
 shutil.copy2(ROOT / 'packaging/macos/Install.command', image / 'Install.command')
 (image / 'Install.command').chmod(0o755)
+installer_app = image / 'E-4 Installer.app'
+run('ditto', build / f'e4_installer_artefacts/{a.config}/E-4 Installer.app', installer_app)
+installer_sign = ['codesign', '--force', '--sign', identity or '-']
+installer_sign += ['--timestamp', '--options', 'runtime'] if identity else ['--timestamp=none']
+run(*installer_sign, installer_app)
+run('codesign', '--verify', '--deep', '--strict', installer_app)
+kit = image / 'Studio Test Kit'
+shutil.copytree(ROOT / 'docs/studio', kit)
+ableton = kit / 'Ableton/E4 Studio Acceptance Project'
+ableton.mkdir(parents=True)
+shutil.copy2(ROOT / 'docs/ableton/E4 Studio Acceptance Project/E4 Studio Acceptance.als', ableton)
+shutil.copy2(ROOT / 'docs/ableton/README.md', kit / 'Ableton/ROUTING.md')
+shutil.copy2(ROOT / 'docs/HARDWARE_TESTS.md', kit / 'DETAILED-TESTS.md')
+shutil.copy2(ROOT / 'docs/validation/studio-preflight-2026-10-24/README.md', kit / 'VALIDATION.md')
+tools = kit / 'Tools'
+tools.mkdir()
+probe = tools / 'e4_midi_probe'
+run('ditto', build / f'e4_midi_probe_artefacts/{a.config}/e4_midi_probe', probe)
+sign_args = ['codesign', '--force', '--sign', identity or '-']
+sign_args += ['--timestamp', '--options', 'runtime'] if identity else ['--timestamp=none']
+run(*sign_args, probe)
+run('codesign', '--verify', '--strict', probe)
 (image / 'Read Me.txt').write_text('''E-4 Companion — macOS Apple Silicon release preview
 
-Quit audio hosts. Double-click Install.command to install VST3, AU and standalone
+Quit audio hosts. Double-click E-4 Installer and select VST3, AU and/or standalone
 for your user account without administrator privileges. Existing bundles are
 backed up under ~/Library/Application Support/E-4 Companion/Installer Backups.
-The terminal shows installation progress. Restart/rescan your host afterwards.
+The installer shows progress and the backup location. Restart/rescan your host afterwards.
 You may instead copy only the formats you need to their standard plug-in folders.
+Copy Studio Test Kit to a writable folder, then read START-HERE.md. It includes
+the Live routing set, short MIDI test clips and a result sheet for the studio.
 
 AU MIDI output in Ableton Live is unsupported; use VST3 with the documented
 second-track MIDI route. This companion requires the physical Roland E-4 and

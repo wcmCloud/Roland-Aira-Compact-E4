@@ -1,0 +1,40 @@
+[
+  {
+    "check": "signature E-4 Companion.vst3",
+    "passed": true
+  },
+  {
+    "check": "signature E-4 Companion.component",
+    "passed": true
+  },
+  {
+    "check": "signature E-4 Companion.app",
+    "passed": true
+  },
+  {
+    "check": "signature E-4 Installer.app",
+    "passed": true
+  },
+  {
+    "check": "signature Studio Test Kit/Tools/e4_midi_probe",
+    "passed": true
+  },
+  {
+    "check": "Gatekeeper E-4 Companion.app",
+    "passed": true,
+    "detail": "/Users/chris/Documents/GitHub/Aira E4/build-installer/final-studio-image/E-4 Companion.app: accepted\nsource=Notarized Developer ID"
+  },
+  {
+    "check": "Gatekeeper E-4 Installer.app",
+    "passed": true,
+    "detail": "/Users/chris/Documents/GitHub/Aira E4/build-installer/final-studio-image/E-4 Installer.app: accepted\nsource=Notarized Developer ID"
+  },
+  {
+    "check": "install from final mounted image",
+    "passed": true
+  },
+  {
+    "check": "studio kit contents",
+    "passed": true
+  }
+]

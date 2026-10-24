@@ -49,6 +49,10 @@ Official Steinberg VST3 validator: 47 passed, zero failed after fixing the empty
 
 Added native arm64 Release packaging, a choice-based system PKG, a user-folder installer with backup/rollback, and Developer ID signing/notarytool submission/stapling/Gatekeeper assessment using the existing T-8 signing setup. DMG notarization succeeds; PKG distribution signing awaits a Developer ID Installer certificate. Isolated-folder fresh installation and upgrade pass; real clean-account/system PKG installation remains pending. Windows/Linux require native builds, validators and installers; AU is Apple-only. See [packaging](packaging/README.md).
 
+## Studio preflight update — 24 October 2026
+
+Installed signed Release VST3/AU/standalone. Release AU and Steinberg validation pass, all eight project checks pass, and installed Release wrapper checks pass. Live reopens a saved +2 transpose value, loads/removes a second instance and responds to activation/editor toggles and transport. A receive-only virtual endpoint captures six notes and six matching releases on channel 3, including 64/256/1024-sample checks; bend capture covers centre resets only. Original 512 buffer and E-4/channel-3 route restored, neutral transpose and stopped transport saved in the studio acceptance set. Added a portable studio test kit, fixtures/result sheet, controller profile and signed diagnostics to final packaging. Added a native graphical installer with format choices and isolated rollback verification, plus an E-4 icon matching the T-8 app family. See [preflight evidence](docs/validation/studio-preflight-2026-10-24/README.md). Remaining physical/controller/audio and held-note acceptance belongs to the studio; do not mark it complete from these smoke tests.
+
 ## Implementation progress
 
 - Fixed missing external-keyboard/host-clip highlights. Incoming-note display state is tracked separately by input channel and repeated holds, then painted alongside mouse/computer-keyboard state. Visual updates never call note listeners or generate MIDI. The view follows out-of-range incoming pitches; highlights show input pitches before transpose.

@@ -1,0 +1,280 @@
+{
+  "mode": "receive-only",
+  "inputIdentifier": "virtual:E4 Acceptance Monitor",
+  "durationSeconds": 180.00406833338738,
+  "messages": 32,
+  "noteOns": 6,
+  "noteOffs": 6,
+  "pitchBends": 20,
+  "clockPulses": 0,
+  "starts": 0,
+  "stops": 0,
+  "validClockIntervals": 0,
+  "nonpositiveClockIntervals": 0,
+  "clockMeanIntervalMs": 0.0,
+  "clockMinIntervalMs": 0.0,
+  "clockMaxIntervalMs": 0.0,
+  "clockIntervalStddevMs": 0.0,
+  "estimatedBpm": 0.0,
+  "timingBasis": "local callback arrival times; batching and OS scheduling affect results",
+  "hardwareValidated": false,
+  "shortMessagePreview": [
+    {
+      "arrivalSeconds": 1.211814492993625e6,
+      "bytes": [
+        146,
+        60,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211814521378792e6,
+      "bytes": [
+        130,
+        60,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211815202876417e6,
+      "bytes": [
+        146,
+        64,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211815530450167e6,
+      "bytes": [
+        130,
+        64,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211815921712208e6,
+      "bytes": [
+        146,
+        67,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.21181603129325e6,
+      "bytes": [
+        130,
+        67,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.21184090292325e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211846039063167e6,
+      "bytes": [
+        146,
+        60,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211846100807958e6,
+      "bytes": [
+        130,
+        60,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211863359233833e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211873684225292e6,
+      "bytes": [
+        146,
+        64,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.21187395948825e6,
+      "bytes": [
+        130,
+        64,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211886546686583e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211891150344625e6,
+      "bytes": [
+        146,
+        67,
+        100
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211891204505917e6,
+      "bytes": [
+        130,
+        67,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211901593387208e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279385458e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386166e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386375e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386583e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386708e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386833e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279386958e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387083e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.21194727938725e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387375e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387542e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387667e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387792e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279387917e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279388042e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    },
+    {
+      "arrivalSeconds": 1.211947279388167e6,
+      "bytes": [
+        226,
+        0,
+        64
+      ]
+    }
+  ],
+  "previewLimit": 256
+}

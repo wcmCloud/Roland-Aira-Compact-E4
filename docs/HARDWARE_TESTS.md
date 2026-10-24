@@ -43,6 +43,10 @@ Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN rout
 
 The AU builds but does not yet have a supported direct MIDI-output path in Live. Do not mark AU performance acceptance complete merely because scanning succeeds. AU validation, the Steinberg VST3 validator, native UI inspection, clock timing measurements, signing/notarisation and cross-app endpoint ownership remain separate release gates.
 
+## Release preflight
+
+See [24 October studio preflight](validation/studio-preflight-2026-10-24/README.md): signed Release AU/VST3 validation, Live parameter recall/multiple-instance smoke tests and balanced virtual MIDI output checks now pass. This does not mark the physical/held-note checks below complete. The [portable studio checklist](studio/START-HERE.md) and blank [result sheet](studio/RESULTS.md) are included in the DMG.
+
 ## Result log
 
 | Check | Environment / route | Result | Capture / notes |

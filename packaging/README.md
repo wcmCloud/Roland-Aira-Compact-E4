@@ -8,7 +8,7 @@ Build Release:
 
 ```sh
 cmake -S . -B build-installer -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$PWD/build/_deps/juce-src" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DBUILD_TESTING=OFF
-cmake --build build-installer --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone -j 6
+cmake --build build-installer --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_installer e4_midi_probe -j 6
 python3 scripts/package-macos.py --signing-config /path/to/signing.local.env --notarize
 ```
 
@@ -24,7 +24,7 @@ Keep passwords and signing keys in Keychain. Do not commit local signing configu
 
 The packaging tool signs staged copies with hardened runtime and secure timestamps, verifies signatures, creates a choice-based .pkg and a .dmg, submits signed deliverables to Apple, requires Accepted, staples tickets, validates them, runs Gatekeeper assessment and writes SHA256SUMS. Sources/build outputs are not modified. Artifacts and detailed logs stay under ignored build-packages. Earlier output directories are preserved on repeat runs.
 
-- **DMG:** signed/notarized with the Application certificate. Open it and run Install.command to install all three formats into your user folders. It backs up existing copies and rolls back failures. No admin password is required. Alternatively copy only wanted formats manually. Quit hosts before installing and restart/rescan afterwards.
+- **DMG:** signed/notarized with the Application certificate. Open it and run E-4 Installer to select and install formats into your user folders. It backs up existing copies and rolls back failures. No admin password is required. Alternatively copy only wanted formats manually. Quit hosts before installing and restart/rescan afterwards.
 - **PKG:** offers VST3, experimental AU and standalone choices; installs in `/Library/Audio/Plug-Ins/VST3`, `/Library/Audio/Plug-Ins/Components` and `/Applications`. It requests administrator authorization, uses fixed destinations and upgrades bundles. It does not back up overwritten system bundles or delete user copies. When no Installer identity is supplied, its filename explicitly says UNSIGNED and it is not submitted for notarization. Do not distribute that unsigned package as a finished release.
 
 For the signed PKG path, create/import a **Developer ID Installer** certificate with its private key through the Apple developer account, add its identity to the local configuration and rerun the same command. PKG signing, notarization, stapling and assessment then happen automatically. Do not substitute an Application or Apple Distribution identity.
@@ -41,3 +41,7 @@ CMake selects VST3 everywhere and AU only on Apple platforms. Build VST3 and the
 - Linux: produce an architecture-specific archive/package installing VST3 to `~/.vst3` or an appropriate system VST3 folder, plus the standalone binary. Validate distribution/library compatibility.
 
 No Windows/Linux installer or binaries are included yet. See [Steinberg plug-in locations](https://steinbergmedia.github.io/vst3_dev_portal/pages/Technical%2BDocumentation/Locations%2BFormat/Plugin%2BLocations.html) and [Apple notarization requirements](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
+
+The final studio DMG also includes the writable-copy test kit, Live acceptance set, deterministic MIDI fixtures and signed receive-only diagnostic tool. Build e4_midi_probe before packaging. No PDF manual or account credentials are redistributed in the kit.
+
+The signed graphical E-4 Installer app installs chosen formats into the current user’s folders with backups and rollback, avoiding the need for a system PKG certificate. Install.command remains an optional Terminal fallback. The installer app is signed with the same Developer ID Application identity and included in DMG notarization.

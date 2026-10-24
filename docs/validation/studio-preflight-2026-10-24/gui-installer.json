@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "check": "fresh install",
+      "passed": true
+    },
+    {
+      "check": "reinstall with backup",
+      "passed": true
+    },
+    {
+      "check": "installed signature: E-4 Companion.vst3",
+      "passed": true
+    },
+    {
+      "check": "installed signature: E-4 Companion.component",
+      "passed": true
+    },
+    {
+      "check": "installed signature: E-4 Companion.app",
+      "passed": true
+    },
+    {
+      "check": "three previous bundles backed up",
+      "passed": true
+    },
+    {
+      "check": "installation failure returns nonzero",
+      "passed": true
+    },
+    {
+      "check": "old VST3 restored after later-format failure",
+      "passed": true
+    },
+    {
+      "check": "later formats not partially installed",
+      "passed": true
+    }
+  ],
+  "scope": "isolated homes; same engine as graphical Install button"
+}

@@ -10,3 +10,7 @@ docs/ableton/**/Icon?
 
 # Local signing configuration (names only; credentials remain in Keychain).
 scripts/signing.local.env
+
+# Icon renderer build products.
+Tools/IconRenderer/bin/
+Tools/IconRenderer/obj/

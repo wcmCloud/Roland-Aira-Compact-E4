@@ -1,0 +1,37 @@
+# E-4 Companion studio test kit
+
+Release preview 0.1.0 for Apple Silicon Macs. Bring the notarized DMG to the studio; this folder, the Live set and MIDI fixtures are included inside it. AU is included for other-host evaluation; use **VST3 in Ableton Live**.
+
+## Install and connect
+
+1. Quit Live and other audio hosts. Open the DMG and double-click E-4 Installer. Select the formats you need. It installs into your user VST3/Components folders and ~/Applications, preserving earlier copies in ~/Library/Application Support/E-4 Companion/Installer Backups. Restart/rescan Live. No security overrides should be needed for the signed/notarized image. Record any security prompt instead of disabling Gatekeeper.
+2. Copy Studio Test Kit from the DMG to a writable studio folder before opening/saving the set or editing the result sheet. Open Ableton/E4 Studio Acceptance Project/E4 Studio Acceptance.als (created in Live 12.4.7 Lite). For older Live, build the route below manually.
+3. Connect the E-4 USB MIDI. Enable VOCODER, KEY IN and HARMONY on the E-4, match channel 3, and speak into its mic. Physical reverb/formant/carrier settings are manual: this app cannot read/change them. Record firmware, host/macOS version, connection and monitoring route in RESULTS.md.
+4. E4 Controller: load VST3; MIDI input your keyboard; Monitor In for live playing. E4 Send: MIDI From E4 Controller, lower chooser **E-4 Companion**, Monitor In; MIDI To E-4 (MIDI IN), channel 3. If endpoint names differ, reselect them. Keep standalone disconnected when Live controls the same hardware.
+5. Listen first through speakers/headphones on the E-4. To record, select the E-4 USB audio input or connect its analog output to your studio interface. The app produces silent audio. The audio return is deliberately Monitor Off until its actual input is selected; do not monitor the Mac mic accidentally. Start at a modest level and avoid mic/speaker feedback.
+
+The earlier Mac setup repeatedly failed to open E-4 USB audio. Direct E-4 speakers worked and four-note playback was user confirmed. USB audio return remains a studio test. Check AIRA LINK is Off for direct computer USB as described in the manual; do not assume a briefly selected audio device is working.
+
+## Short tests, in order
+
+Record PASS/FAIL and save MIDI/audio evidence in RESULTS.md. Only four-note playback is already user confirmed; the remaining audible checks are open.
+
+1. **Basic playback/release:** play/release single notes and all four pads. Keyboard highlights should follow incoming keys. Four distinct pitches share the voice budget. Release all controls; no sound should remain when speaking. Use Panic if needed.
+2. **Four voices/fifth rejection:** import fixtures/four-voices-and-fifth.mid onto E4 Controller. For clip playback, set Controller Monitor **Auto**, leave unarmed, and keep Send Monitor In; Monitor In on Controller can suppress clips. At 120 BPM, C4/E4/G4/B4 start together, D5 is attempted at 0.5 s and released at 1 s, original chord releases at 1.5 s. The fifth should not displace the first four. Stop the clip before repeating. Restore Monitor In for live playing.
+3. **Bend:** fixtures/pitch-bend.mid holds C4, sends centre, minimum, maximum and centre, then releases. Listen for downward/upward movement and a return to centre; record actual semitone range. Check hardware KEY IN/HARMONY settings. Also drag/release the UI bend control. Note names here use C4=MIDI 60; Live may display a different octave label.
+4. **Transpose/scales/chords:** play with transpose +12/-12, then reset 0. Choose C major Nearest and play C#; output snaps to C. Reject should silence C#. Check custom chord names/inversions/octaves, save/load/apply a bank and verify held notes release without automatic replay on edits.
+5. **Controller learn:** learn a spare keyboard note to Pad 1; Apply, release it, then press again. It should play the pad and consume its original note. Learn CC20 to Transpose (if available on your controller), Apply and move to a fresh value. CCs control app actions and are never hardware knob commands. If Live reserves a control, confirm Track input and control-surface/Remote assignments. Test load/save .e4map and duplicate/conflicting bindings. For a repeatable clip test, load fixtures/studio-controller.e4map in MIDI learn, review it and Apply; it assigns channel-1 note48 to Pad1 and CC20 to Transpose. Play fixtures/controller-mapping-input.mid with Controller Monitor Auto/unarmed. This does not prove physical keyboard delivery or learn capture. The final CC64 restores transpose near centre; explicitly reset transpose to 0 afterwards.
+6. **Save/reopen:** save a studio copy with a custom bank, mappings, scale and transpose. Reopen it: values should return and no notes should start until played. Verify original profiles/files need not stay available for embedded plug-in state.
+7. **Cleanup:** with held UI notes/pads, test Panic, editor close, root/channel/transpose changes, transport Play then Stop and bypass. Test a clip-owned note overlapping a UI note; closing the editor should release only UI ownership. Live can suspend/remove a device before a final MIDI callback: document any stuck notes on removal and recover using a known working Panic route or the hardware procedure. Do not claim unconditional cleanup after removal/unplug.
+8. **Host configurations:** repeat short notes and releases at 64/256/1024 samples. Try two instances on separately identified output paths/channels; do not send duplicate clocks to one E-4. Check that changing one instance’s bank/mappings does not alter the other. Remove the test instance after releasing notes.
+9. **Clock/transport:** choose one master only. In Live use E-4 MIDI Output Sync, with standalone internal clock off. In standalone disable Live Sync, connect explicitly, enable internal clock and test 60/120/180 BPM Start/Stop and hardware looper response. Manual looper arming may still be required; Start is not a record command. Never expect Continue/song-position chase. For timing certification capture ten minutes per tempo under load; listening alone is not a jitter measurement.
+10. **Recovery:** standalone unplug/replug and sleep/wake should require explicit reconnect, without old-note replay. Test after releasing normally before trying held-note interruption. Finally quit/relaunch and verify settings persist while output stays disconnected and clock off.
+11. **Audio return:** record the physical E-4 into Live at your studio interface settings. Add reverb on the audio return if desired. Keep audio effects outside the companion. Record latency/dropouts and which USB or analog path works.
+
+## Restore or uninstall
+
+Quit hosts; move only E-4 Companion.vst3, E-4 Companion.component and ~/Applications/E-4 Companion.app to Trash. Restore matching previous bundles from Installer Backups if needed. Banks, mappings and DAW projects are not removed. Avoid duplicate global/user plug-ins when switching install scope; user VST3 copies take priority.
+
+## Scope of local checks
+
+Apple AU validation, Steinberg VST3 validation, project automated checks and a Release Live load/parameter/recall smoke test are separate from studio hardware acceptance. See VALIDATION.md in this kit. The installer is native arm64; Intel/Windows/Linux builds and an actual clean-account install are not certified. A separate unsigned system PKG is a development artifact pending a Developer ID Installer certificate; use the notarized DMG for this studio handoff.

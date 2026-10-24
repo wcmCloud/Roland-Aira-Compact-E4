@@ -1,0 +1,20 @@
+[
+  {
+    "bundle": "E-4 Companion.vst3",
+    "filesMatched": 6,
+    "icon": "Icon.icns",
+    "passed": true
+  },
+  {
+    "bundle": "E-4 Companion.component",
+    "filesMatched": 5,
+    "icon": "Icon.icns",
+    "passed": true
+  },
+  {
+    "bundle": "E-4 Companion.app",
+    "filesMatched": 6,
+    "icon": "Icon.icns",
+    "passed": true
+  }
+]
