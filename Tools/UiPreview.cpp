@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "ChordBankEditor.h"
 #include <iostream>
 std::unique_ptr<juce::Component> createStandalonePreview();
 int main(int argc,char** argv) {
@@ -30,6 +31,8 @@ int main(int argc,char** argv) {
     processor.processBlock(audio,midi);
     editor.reset(processor.createEditor());
     if (!render(*editor,"plugin-incoming.png")) return 1;
+    e4::ui::ChordBankEditor bankEditor(e4::PerformanceSettings{},60,[](e4::PerformanceSettings) {});
+    if (!render(bankEditor,"chord-bank.png")) return 1;
     std::cout << "Rendered standalone and plug-in UI without opening devices or loading preferences.\n";
     return 0;
 }

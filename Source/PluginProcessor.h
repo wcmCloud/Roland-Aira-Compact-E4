@@ -2,6 +2,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "MidiEngine.h"
 #include "ChordPads.h"
+#include "SettingsExchange.h"
 #include "PerformanceQueue.h"
 #include "InputNoteState.h"
 #include <atomic>
@@ -20,6 +21,8 @@ public:
     std::uint32_t rejectionCount() const noexcept { return rejectedCount.load(); }
     e4::MidiEngine::Rejection lastRejection() const noexcept { return static_cast<e4::MidiEngine::Rejection>(rejectedReason.load()); }
     std::array<std::uint64_t,2> incomingNotes() const noexcept { return {inputLow.load(),inputHigh.load()}; }
+    e4::PerformanceSettings chordBank() const;
+    bool setChordBank(const e4::PerformanceSettings& bank);
     juce::AudioProcessorValueTreeState parameters;
     bool isBusesLayoutSupported(const BusesLayout&) const override;
     const juce::String getName() const override { return "E-4 Companion"; }
@@ -43,6 +46,8 @@ private:
     juce::MidiBuffer output;
     e4::PerformanceQueue performance;
     e4::ChordPads chords;
+    e4::SettingsExchange bankExchange;
+    std::uint64_t bankSerial = 0;
     std::atomic<bool> uiReleaseRequested { false };
     std::atomic<int> voiceCount { 0 };
     std::atomic<std::uint32_t> rejectedCount {0};

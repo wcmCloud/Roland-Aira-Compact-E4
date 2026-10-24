@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PerformanceKeyboard.h"
+#include "ChordBankEditor.h"
 #include <iostream>
 int main() {
     juce::ScopedJuceInitialiser_GUI initialiser;
@@ -215,6 +216,58 @@ int main() {
     display.showIncoming(1,0);
     check(display.getRangeStart() == 0 && display.incomingDown(0),"keyboard view follows low incoming notes");
     mouseKeys.removeListener(&listener);
+    E4Processor bankProcessor;
+    bankProcessor.prepareToPlay(48000,128); midi.clear(); bankProcessor.processBlock(audio,midi);
+    bankProcessor.postPerformance({e4::PerformanceCommand::padDown,0,100});
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,60,static_cast<juce::uint8>(100)),0);
+    bankProcessor.processBlock(audio,midi);
+    auto bank=bankProcessor.chordBank(); bank.pads[0].inversion=1; bank.pads[0].octave=-1;
+    check(bankProcessor.setChordBank(bank),"processor accepts validated bank snapshot");
+    midi.clear(); bankProcessor.processBlock(audio,midi);
+    check(bankProcessor.activeVoices()==1,"bank replacement preserves host-owned root");
+    for (const auto entry : midi) check(!entry.getMessage().isNoteOn(),"bank replacement never replays held pads");
+    bankProcessor.postPerformance({e4::PerformanceCommand::padDown,0,100});
+    midi.clear(); bankProcessor.processBlock(audio,midi);
+    bool found52=false,found55=false;
+    for (const auto entry : midi) if (entry.getMessage().isNoteOn()) {
+        found52=found52 || entry.getMessage().getNoteNumber()==52;
+        found55=found55 || entry.getMessage().getNoteNumber()==55;
+    }
+    check(found52 && found55,"processor plays edited inversion and octave");
+    juce::MemoryBlock bankState; bankProcessor.getStateInformation(bankState);
+    E4Processor bankRestored; bankRestored.setStateInformation(bankState.getData(),static_cast<int>(bankState.getSize()));
+    check(bankRestored.chordBank().pads[0].inversion==1 && bankRestored.chordBank().pads[0].octave==-1,"plug-in state embeds complete bank");
+    bankRestored.prepareToPlay(48000,128); midi.clear(); bankRestored.processBlock(audio,midi);
+    check(bankRestored.activeVoices()==0,"restored bank never restores held notes");
+    auto corrupt=bankProcessor.parameters.copyState(); corrupt.setProperty("schema",4,nullptr); corrupt.setProperty("chordBank","bad",nullptr);
+    juce::MemoryBlock corruptData; if (auto xml=corrupt.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,corruptData);
+    bankRestored.setStateInformation(corruptData.getData(),static_cast<int>(corruptData.getSize()));
+    check(bankRestored.chordBank().pads[0].inversion==1,"invalid embedded bank leaves current state intact");
+    auto legacyBank=bankProcessor.parameters.copyState(); legacyBank.setProperty("schema",3,nullptr);
+    if (auto xml=legacyBank.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,corruptData);
+    bankRestored.setStateInformation(corruptData.getData(),static_cast<int>(corruptData.getSize()));
+    check(bankRestored.chordBank().pads[0].inversion==0,"old plug-in state migrates to factory chord bank");
+    bankProcessor.postPerformance({e4::PerformanceCommand::noteOn,75,100}); midi.clear(); bankProcessor.processBlock(audio,midi);
+    bank.pads[0].inversion=2; bankProcessor.setChordBank(bank);
+    bankProcessor.postPerformance({e4::PerformanceCommand::noteOff,75,0}); midi.clear(); bankProcessor.processBlock(audio,midi);
+    bool released75=false; for (const auto entry : midi) released75=released75 || (entry.getMessage().isNoteOff() && entry.getMessage().getNoteNumber()==75);
+    check(released75,"bank updates cannot discard queued screen-key releases");
+    e4::PerformanceSettings snapshotBankForTest;
+    check(e4::ui::parseBank(e4::ui::bankText(bank),snapshotBankForTest),"bank file text round-trips");
+    auto* inversionParameter=bankProcessor.parameters.getParameter("pad0Inversion");
+    inversionParameter->setValueNotifyingHost(inversionParameter->convertTo0to1(3));
+    midi.clear(); bankProcessor.processBlock(audio,midi);
+    check(bankProcessor.chordBank().pads[0].inversion==2,"automated inversion clamps to available chord voices");
+    bankProcessor.postPerformance({e4::PerformanceCommand::padDown,0,100});
+    midi.clear(); bankProcessor.processBlock(audio,midi);
+    inversionParameter->setValueNotifyingHost(inversionParameter->convertTo0to1(0));
+    midi.clear(); bankProcessor.processBlock(audio,midi);
+    check(bankProcessor.activeVoices()==1,"automation releases changed pad while preserving host note");
+    for (const auto entry : midi) check(!entry.getMessage().isNoteOn(),"automation changes do not replay chord");
+    const auto bankFile=juce::File::getCurrentWorkingDirectory().getNonexistentChildFile("e4-bank-test",".e4bank");
+    check(bankFile.replaceWithText(e4::ui::bankText(bank)) && e4::ui::parseBank(bankFile.loadFileAsString().trim(),snapshotBankForTest)
+        && snapshotBankForTest.pads[0].inversion==bank.pads[0].inversion,"bank file save/load round-trip");
+    bankFile.deleteFile();
     std::cout << "Processor integration: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

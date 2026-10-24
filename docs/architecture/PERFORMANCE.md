@@ -6,9 +6,9 @@
 front ends obtain factory pad intervals from this model through `ChordPads`.
 It holds four stable pad slots, printable ASCII names up to 24 characters,
 one to four strictly increasing offsets (-24..24), inversion and octave values.
-Inversion/octave are stored for the chord-bank milestone; the current factory
-player still uses its existing root-position voicings. No editable-bank UI or
-preset file chooser is shipped yet.
+ChordPads applies inversion by repeatedly moving the lowest voice above the
+highest, then octave placement. It rejects the whole chord if any output pitch
+is outside MIDI range. The shared bank editor stages changes until Apply.
 
 `PerformancePreset` defines a canonical 133-byte payload: E4PF magic, schema 1,
 then four 32-byte slots (25 name bytes including zero terminator/padding, count,
@@ -17,9 +17,11 @@ C++ structs. Decode validates the entire candidate before assigning it; wrong
 size, magic, future version, malformed names, duplicate/unordered offsets and
 invalid numeric values fail without changing the destination. Encode also
 leaves its destination intact on failure. This is a new app preset payload,
-separate from the existing schema-3 plug-in state. Old sessions are unaffected.
-File I/O, import/export controls, embedding and migration to a later plug-in
-schema belong to P1. The payload does not contain held notes or connection state.
+embedded as Base64 in schema-4 plug-in state and exported as Base64 text in
+.e4bank files. Schemas 1–3 migrate to factory pads. Inversion/octave automation
+parameters override corresponding embedded values at runtime. The payload does
+not contain held notes or connection state. Standalone persists the active bank
+on normal exit; loading a file only stages edits until Apply.
 
 Source IDs 0..5 retain their existing meanings: external/host input, screen
 keyboard, then four pads. IDs 6 and 7 reserve independent arpeggiator and
@@ -30,7 +32,7 @@ continues to clear only the screen keyboard and pads; future generators must
 apply their explicit latch/host ownership policy rather than expanding that
 loop indiscriminately.
 
-## Processing and publication rules for the next increments
+## Processing and publication rules
 
 1. Capture raw input for visual feedback, then consume controller mappings.
 2. Transform note input by the selected scale mode while preserving the mapping
@@ -41,10 +43,13 @@ loop indiscriminately.
 5. Deliver through host MIDI output or the standalone sender.
 
 UI/file validation builds a complete settings candidate outside the audio
-callback. P1 must add bounded publication and consumer-owned active snapshots;
-never share a mutable settings object between threads. Apply a replacement at
+callback. SettingsExchange serializes non-real-time writers with a mutex and publishes
+canonical bytes through lock-free atomics. Its audio reader checks the revision
+once before and after copying, returning immediately on an in-progress update;
+it never retries or locks. The consumer owns its active snapshot. Never share
+a mutable settings object between threads. Apply a replacement at
 an explicit block/step boundary after releasing the affected old notes, discard
-stale queued presses, and wait for fresh input. A rejected update preserves the
+stale queued pad presses (preserving screen-key releases), and wait for fresh input. A rejected update preserves the
 active snapshot. No file access, locks, device calls or dynamic allocation may
 be introduced on the processing path. The current engine already snapshots pad
 notes for release; future inversion/scale changes must retain that property.
@@ -57,3 +62,10 @@ invalid owners, direct/generated overlap and shared voice-limit recovery.
 Existing chord, processor and actual VST3 wrapper regressions exercise the
 factory settings through both app paths. These software checks do not establish
 hardware timing or Ableton acceptance.
+
+P1 tests additionally exercise every factory inversion across all 128 roots,
+negative offsets, wide voicings, whole-chord range rejection, invalid replacement
+preservation, 5,000 concurrent bank publications, actual text-file round-trip,
+embedded host state, schema migration, automation and overlapping-owner cleanup.
+Native component previews include the bank editor. OS file-picker interaction
+and actual Live/hardware playback remain separate manual acceptance tasks.

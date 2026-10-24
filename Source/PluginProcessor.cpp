@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "StudioTheme.h"
 #include "PerformanceKeyboard.h"
+#include "ChordBankEditor.h"
 
 namespace {
 class E4Editor final : public juce::AudioProcessorEditor, private juce::Timer,
@@ -45,6 +46,16 @@ public:
                 ? e4::PerformanceCommand::padDown : e4::PerformanceCommand::padUp,i,100}); };
             addAndMakeVisible(pad);
         }
+        bankButton.setButtonText("Edit / load chord bank...");
+        bankButton.onClick=[this] {
+            if (bankWindow) { bankWindow->toFront(true); return; }
+            auto safe=juce::Component::SafePointer<E4Editor>(this);
+            bankWindow=e4::ui::openChordBank(owner.chordBank(),static_cast<int>(root.getValue()),[safe](e4::PerformanceSettings bank) {
+                if (safe) safe->owner.setChordBank(bank);
+            });
+        };
+        addAndMakeVisible(bankButton);
+        updatePadNames();
         e4::ui::keyboardStyle(keyboard);
         keys.addListener(this);
         keyboard.setAvailableRange(36,84); keyboard.setScrollButtonsVisible(false);
@@ -55,6 +66,7 @@ public:
         startTimerHz(20);
     }
     ~E4Editor() override {
+        if (bankWindow) delete bankWindow.getComponent();
         stopTimer(); keys.removeListener(this); owner.requestUiRelease(); setLookAndFeel(nullptr);
     }
     void paint(juce::Graphics& g) override { e4::ui::surface(g,getWidth(),getHeight(),false,false); }
@@ -67,11 +79,19 @@ public:
         place(transposeLabel,528,179,220,18); place(transpose,528,202,220,36);
         place(bendLabel,44,265,100,22); place(bend,156,255,760,38);
         for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,370,209,78);
+        place(bankButton,656,334,260,28);
         status.setBounds(0,0,0,0); place(voiceDisplay,676,499,240,22); place(keyboard,44,534,872,58);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
     }
 
 private:
+    void updatePadNames() {
+        const auto bank=owner.chordBank();
+        for (std::size_t i=0;i<4;++i) {
+            pads[i].setButtonText(juce::String(bank.pads[i].name.data()));
+            pads[i].getProperties().set("detail",juce::String(bank.pads[i].noteCount)+" VOICES / INV "+juce::String(bank.pads[i].inversion));
+        }
+    }
     void send(e4::PerformanceCommand command) { owner.postPerformance(command); }
     void handleNoteOn(juce::MidiKeyboardState*,int,int note,float velocity) override {
         send({e4::PerformanceCommand::noteOn,note,juce::jlimit(1,127,juce::roundToInt(velocity*127))});
@@ -80,6 +100,7 @@ private:
         send({e4::PerformanceCommand::noteOff,note,0});
     }
     void timerCallback() override {
+        updatePadNames();
         juce::MidiBuffer unused; keys.processNextMidiBuffer(unused,0,1,false);
         const auto incoming = owner.incomingNotes(); keyboard.showIncoming(incoming[0],incoming[1]);
         voiceDisplay.update(owner.activeVoices(),owner.rejectionCount(),owner.lastRejection());
@@ -92,7 +113,8 @@ private:
     juce::TooltipWindow tooltips {this,600};
     juce::Label title,info,status,channelLabel,rootLabel,transposeLabel,bendLabel;
     juce::Slider channel,root,bend,transpose;
-    juce::TextButton panic;
+    juce::TextButton panic,bankButton;
+    juce::Component::SafePointer<juce::DialogWindow> bankWindow;
     std::array<juce::TextButton,4> pads;
     juce::AudioProcessorValueTreeState::SliderAttachment channelAttachment,rootAttachment,transposeAttachment;
 };
@@ -102,8 +124,35 @@ E4Processor::E4Processor()
       parameters(*this, nullptr, "E4State", {
           std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"channel", 1}, "MIDI channel", 1, 16, 3),
           std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"chordRoot", 1}, "Chord root", 36, 84, 60),
-          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"transpose", 1}, "Transpose", -24, 24, 0)
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"transpose", 1}, "Transpose", -24, 24, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad0Inversion", 1}, "Pad 1 inversion", 0, 3, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad0Octave", 1}, "Pad 1 octave", -2, 2, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad1Inversion", 1}, "Pad 2 inversion", 0, 3, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad1Octave", 1}, "Pad 2 octave", -2, 2, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad2Inversion", 1}, "Pad 3 inversion", 0, 3, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad2Octave", 1}, "Pad 3 octave", -2, 2, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad3Inversion", 1}, "Pad 4 inversion", 0, 3, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad3Octave", 1}, "Pad 4 octave", -2, 2, 0)
       }) {}
+e4::PerformanceSettings E4Processor::chordBank() const {
+    auto bank=bankExchange.get();
+    for (int i=0;i<4;++i) {
+        auto& pad=bank.pads[static_cast<std::size_t>(i)];
+        pad.inversion=juce::jlimit(0,pad.noteCount-1,static_cast<int>(parameters.getRawParameterValue("pad"+juce::String(i)+"Inversion")->load()));
+        pad.octave=static_cast<int>(parameters.getRawParameterValue("pad"+juce::String(i)+"Octave")->load());
+    }
+    return bank;
+}
+bool E4Processor::setChordBank(const e4::PerformanceSettings& bank) {
+    if (!bank.valid()) return false;
+    for (int i=0;i<4;++i) {
+        auto* inversion=parameters.getParameter("pad"+juce::String(i)+"Inversion");
+        auto* octave=parameters.getParameter("pad"+juce::String(i)+"Octave");
+        inversion->setValueNotifyingHost(inversion->convertTo0to1(static_cast<float>(bank.pads[static_cast<std::size_t>(i)].inversion)));
+        octave->setValueNotifyingHost(octave->convertTo0to1(static_cast<float>(bank.pads[static_cast<std::size_t>(i)].octave)));
+    }
+    return bankExchange.publish(bank);
+}
 void E4Processor::prepareToPlay(double, int) {
     output.ensureSize(65536);
     // Keep note ownership until the next callback can send explicit releases.
@@ -128,6 +177,18 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
     const auto send = [this,&emit](e4::MidiEvent event,int source) {
         engine.process(event.status,event.first,event.second,emit,source);
     };
+    auto nextBank=chords.getSettings();
+    bool bankChanged=bankExchange.consume(nextBank,bankSerial);
+    constexpr const char* inversions[] = {"pad0Inversion","pad1Inversion","pad2Inversion","pad3Inversion"};
+    constexpr const char* octaves[] = {"pad0Octave","pad1Octave","pad2Octave","pad3Octave"};
+    for (std::size_t i=0;i<4;++i) {
+        auto& pad=nextBank.pads[i];
+        const int inversion=juce::jlimit(0,pad.noteCount-1,static_cast<int>(parameters.getRawParameterValue(inversions[i])->load()));
+        const int octave=static_cast<int>(parameters.getRawParameterValue(octaves[i])->load());
+        bankChanged=bankChanged || inversion!=pad.inversion || octave!=pad.octave;
+        pad.inversion=inversion; pad.octave=octave;
+    }
+    if (bankChanged) chords.replace(nextBank,send);
     const int nextChannel = static_cast<int>(parameters.getRawParameterValue("channel")->load());
     const bool channelChanged = nextChannel != engine.outputChannel();
     const int nextTranspose = static_cast<int>(parameters.getRawParameterValue("transpose")->load());
@@ -164,7 +225,7 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
         switch (command.kind) {
             case e4::PerformanceCommand::noteOn: engine.process(0x90,command.value,command.velocity,emit,1); break;
             case e4::PerformanceCommand::noteOff: engine.process(0x80,command.value,0,emit,1); break;
-            case e4::PerformanceCommand::padDown: chords.setHeld(command.value,true,root,send); break;
+            case e4::PerformanceCommand::padDown: if (!bankChanged) chords.setHeld(command.value,true,root,send); break;
             case e4::PerformanceCommand::padUp: chords.setHeld(command.value,false,root,send); break;
             case e4::PerformanceCommand::bend:
                 if (command.value >= 0 && command.value <= 16383)
@@ -209,14 +270,15 @@ void E4Processor::processBlockBypassed(juce::AudioBuffer<float>& audio, juce::Mi
 juce::AudioProcessorEditor* E4Processor::createEditor() { return new E4Editor(*this); }
 void E4Processor::getStateInformation(juce::MemoryBlock& dest) {
     auto state = parameters.copyState();
-    state.setProperty("schema", 3, nullptr);
+    state.setProperty("schema", 4, nullptr);
+    state.setProperty("chordBank",e4::ui::bankText(chordBank()),nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary(*xml, dest);
 }
 void E4Processor::setStateInformation(const void* data, int size) {
     if (auto xml = getXmlFromBinary(data, size)) {
         auto state = juce::ValueTree::fromXml(*xml);
         const int schema = static_cast<int>(state.getProperty("schema"));
-        if (!state.hasType("E4State") || (schema != 1 && schema != 2 && schema != 3)) return;
+        if (!state.hasType("E4State") || (schema != 1 && schema != 2 && schema != 3 && schema != 4)) return;
         const auto validParameter = [&state](const char* id,int minimum,int maximum) {
             auto node = state.getChildWithProperty("id",id);
             const double value = static_cast<double>(node.getProperty("value",-1));
@@ -241,7 +303,22 @@ void E4Processor::setStateInformation(const void* data, int size) {
             state.addChild(transposeNode,-1,nullptr);
         }
         if (!validParameter("transpose",-24,24)) return;
-        state.setProperty("schema",3,nullptr);
+        e4::PerformanceSettings bank;
+        if (schema == 4 && !e4::ui::parseBank(state.getProperty("chordBank").toString(),bank)) return;
+        state.setProperty("schema",4,nullptr);
+        for (int i=0;i<4;++i) {
+            for (const auto* suffix : {"Inversion","Octave"}) {
+                const auto id="pad"+juce::String(i)+suffix;
+                if (schema < 4) {
+                    auto node=state.getChildWithProperty("id",id);
+                    if (node.isValid()) state.removeChild(node,nullptr);
+                    juce::ValueTree value("PARAM"); value.setProperty("id",id,nullptr); value.setProperty("value",0,nullptr); state.addChild(value,-1,nullptr);
+                }
+                const bool isInversion=juce::String(suffix)=="Inversion";
+                if (!validParameter(id.toRawUTF8(),isInversion ? 0 : -2,isInversion ? 3 : 2)) return;
+            }
+        }
+        bankExchange.publish(bank);
         parameters.replaceState(state);
         panicRequested.store(true);
     }

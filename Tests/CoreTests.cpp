@@ -4,6 +4,8 @@
 #include "MidiSession.h"
 #include "ChordPads.h"
 #include "PerformanceQueue.h"
+#include "SettingsExchange.h"
+#include <thread>
 #include <array>
 #include <iostream>
 #include <vector>
@@ -308,6 +310,56 @@ int main() {
     generated.process(0x90,64,100,emit,e4::source::sequencer);
     check(events == std::vector<Event>{{0x92,64,100}},"generator cancellation clears rejected holds");
     generated.panic(emit);
+    std::array<int,4> chordNotes;
+    auto chord = e4::PerformanceSettings{}.pads[0];
+    for (int inversion=0;inversion<3;++inversion) {
+        chord.inversion=inversion;
+        const std::array<std::array<int,4>,3> expected {{{{60,64,67,-1}},{{64,67,72,-1}},{{67,72,76,-1}}}};
+        check(e4::ChordPads::voicing(chord,60,chordNotes) && chordNotes == expected[static_cast<std::size_t>(inversion)],"major inversions move lowest notes above chord");
+    }
+    chord.octave=-1;
+    check(e4::ChordPads::voicing(chord,60,chordNotes) && chordNotes == std::array<int,4>{{55,60,64,-1}},"inversion and octave combine");
+    chord.offsets={{-12,0,12,24}}; chord.noteCount=4; chord.inversion=2; chord.octave=0;
+    check(e4::ChordPads::voicing(chord,60,chordNotes) && chordNotes == std::array<int,4>{{72,84,96,108}},"wide inversions retain unique pitches");
+    e4::ChordPads edited;
+    auto editSettings=edited.getSettings(); editSettings.pads[0].offsets={{-12,0,7,0}};
+    newPort.sent.clear(); session.setOutput(&newPort); newPort.sent.clear();
+    edited.setHeld(0,true,60,chordSend); session.process({0x90,60,100});
+    check(edited.replace(editSettings,chordSend) && session.activeVoices()==1,"bank replacement releases pad but preserves external owner");
+    newPort.sent.clear(); edited.setHeld(0,true,60,chordSend);
+    check(newPort.sent == std::vector<Event>{{0x92,48,100},{0x92,67,100}},"negative custom offsets play valid notes");
+    edited.releaseAll(chordSend); session.process({0x80,60,0}); newPort.sent.clear();
+    edited.setHeld(0,true,0,chordSend);
+    check(newPort.sent.empty(),"out-of-range voicing rejected atomically without partial chord");
+    auto invalidBank=editSettings; invalidBank.pads[0].noteCount=0;
+    check(!edited.replace(invalidBank,chordSend) && edited.getSettings().pads[0].offsets==editSettings.pads[0].offsets,"invalid replacement preserves bank");
+    for (const auto& pad : e4::PerformanceSettings{}.pads)
+        for (int inv=0;inv<pad.noteCount;++inv)
+            for (int root=0;root<128;++root) {
+                auto candidate=pad; candidate.inversion=inv;
+                if (e4::ChordPads::voicing(candidate,root,chordNotes))
+                    for (int n=0;n<pad.noteCount;++n) check(chordNotes[static_cast<std::size_t>(n)]>=0 && chordNotes[static_cast<std::size_t>(n)]<=127,"all generated voicings stay within MIDI range");
+            }
+    e4::SettingsExchange exchange;
+    e4::PerformanceSettings snapshot; std::uint64_t revision=0;
+    check(exchange.consume(snapshot,revision) && !exchange.consume(snapshot,revision),"snapshot consumed once per revision");
+    check(!exchange.publish(invalidBank) && !exchange.consume(snapshot,revision),"invalid publication preserves active snapshot");
+    std::atomic<bool> finished {false};
+    std::thread writer([&] {
+        for (int n=0;n<5000;++n) {
+            auto next=e4::PerformanceSettings{};
+            for (auto& pad : next.pads) pad.octave=(n%5)-2;
+            exchange.publish(next);
+        }
+        finished.store(true);
+    });
+    while (!finished.load()) if (exchange.consume(snapshot,revision)) {
+        check(snapshot.valid(),"concurrent snapshot stays valid");
+        for (const auto& pad : snapshot.pads) check(pad.octave==snapshot.pads[0].octave,"snapshot publication never mixes revisions");
+    }
+    writer.join();
+    exchange.consume(snapshot,revision);
+    check(snapshot.pads[0].octave==2,"consumer eventually observes final published bank");
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

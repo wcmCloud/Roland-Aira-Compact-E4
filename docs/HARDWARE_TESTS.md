@@ -61,3 +61,11 @@ Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passe
 - Press Panic with unsent notes queued: pending presses should be cancelled, clock should stop and actual sent notes should release. Then play a fresh note without reconnecting.
 - Disconnect/quit during a burst: old endpoint should receive cleanup, and queued presses must not migrate to a new route.
 - On sender overflow, timing failure or a UI stall over two seconds, verify cleanup and explicit reconnection. A permanently blocked driver send may delay shutdown; note any driver-specific limits.
+
+## Editable chord-bank acceptance
+
+1. In standalone, open Edit / load chord bank; choose a template, rename it, select an inversion and octave, and check the preview against the MIDI monitor before global transpose. Apply and play the pad with E-4 HARMONY enabled.
+2. Hold a matching external keyboard note while replacing a pad bank. Pad-only notes must release and the keyboard-owned note must continue. A replacement must not automatically sound.
+3. Save a .e4bank file, change edits, load it, confirm loading alone leaves active pads unchanged, then Apply. Check cancel and invalid-file preservation. Close/reopen standalone: the applied bank should return with ports disconnected.
+4. In Live, save a project with an edited bank, remove access to the exported file, then reopen. Verify names, voicings and no automatic note replay. Automate Pad 1 inversion/octave while held; verify old notes release and a fresh press uses the new voicing.
+5. Confirm an out-of-range chord produces no partial voicing. Test overlapping pads, root/transpose changes, Panic, editor close, bypass and disconnect. Verify old projects restore factory pads.

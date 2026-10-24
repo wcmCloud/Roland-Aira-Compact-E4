@@ -1,6 +1,15 @@
 # E-4 Companion — implementation plan
 
 
+### Performance expansion: P1 chord banks (24 October 2026)
+
+- Added shared bank editor in standalone and VST3/AU: editable pad names/intervals, templates, inversions, octave placement, note previews, validated save/load and explicit Apply. Bank filenames provide the bank name.
+- Live playback now uses validated settings snapshots. Audio consumers read bounded atomic publication without waiting; UI/host-state writers serialize outside processing. Changes release pad owners, preserve input/screen ownership and discard stale pad presses rather than replaying held notes.
+- Plug-in schema 4 embeds the bank and migrates schemas 1–3 to factory pads. Existing parameter IDs remain unchanged; added eight stable pad inversion/octave parameters. Standalone persists its active bank on normal exit.
+- Added full-range inversion/voicing checks, atomic out-of-range rejection, file/state round-trips, legacy migration, automation cleanup, queued screen-release preservation and concurrent publication stress. Factory/shared-voice regression checks remain in place.
+- Software acceptance: all seven CTest checks, core ASan/UBSan and ThreadSanitizer checks; native editor and main-window previews visually inspected. Physical E-4, live file-picker interaction and Ableton acceptance remain manual gates. P2 key/scale tools are next.
+
+
 ### Performance expansion: P0 foundation increment (24 October 2026)
 
 - Added shared fixed-size chord settings and a strict version-1 app-preset codec; factory chord playback now reads the shared model in both interfaces. Existing plug-in state remains schema 3.

@@ -27,7 +27,7 @@ First implementation of the shared MIDI engine and plug-in interface:
 - Filters unsupported messages without discarding valid releases in the same block. Incoming clock/transport bytes are deliberately dropped: use Live's port Sync in plug-in workflows. Standalone has an optional internal clock master.
 - Panic sends explicit Note Offs for owned notes and centres bend. Channel changes, host stop transitions, state restore and bypass also clean up owned notes.
 - Transposes notes by −24 to +24 semitones; out-of-range notes are rejected rather than clamped. Changing transpose releases held output pitches and centres bend before new notes are accepted.
-- Saves channel, chord root and transpose as schema-3 plug-in state; older schemas migrate to a default transpose of zero and, where needed, root 60. Held notes are never restored.
+- Saves channel, chord root, transpose, the active chord bank and pad inversion/octave automation as schema-4 plug-in state; schemas 1–3 migrate to factory pads, zero pad inversion/octave and, where needed, default root/transpose. Held notes are never restored.
 - Bounds incoming work to 2048 events per block, then releases owned notes and drops the remainder.
 
 The plug-in emits silent audio; record the physical E-4 audio separately. Enable VOCODER, KEY IN and HARMONY on the hardware. VST3 host routing is the first supported design path, pending hardware testing. The dedicated standalone app now provides direct MIDI port management. The AU output workflow remains experimental: Ableton does not expose AU direct MIDI output.
@@ -159,4 +159,16 @@ Manual acceptance steps are in [docs/HARDWARE_TESTS.md](docs/HARDWARE_TESTS.md).
 
 ## Performance expansion
 
-The first foundation increment adds shared chord settings, validated versioned preset data and independent ownership for future note generators. Factory performance remains unchanged; editable banks and import/export controls are next. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
+Chord banks are now editable in both interfaces. Click **Edit / load chord bank...** above the pads to:
+
+- Name each pad and enter one to four increasing semitone offsets (-24 to +24).
+- Choose inversions and octave placement (-2 to +2), with note-name previews before global transpose.
+- Use **Chord templates...** for major/minor, suspended, diminished, augmented and seventh chords.
+- Save/load `.e4bank` files. Loading stages a bank for review; **Apply bank** activates it. Saving exports the current edits and does not automatically apply them.
+- Restore the factory bank in the editor, then Apply to activate it.
+
+Applying a bank releases existing pad notes and waits for a fresh press; external/screen-key notes retain their separate ownership. Chords outside MIDI 0–127 stay silent as a whole. Pads share the four-voice budget with other input. Inversions repeatedly move the lowest voice above the highest; octave-doubled custom intervals retain distinct pitches.
+
+Standalone remembers the active bank when closed normally. Plug-in schema 4 embeds the complete bank in the host project; no external bank file is needed to reopen it. Each pad exposes **inversion** and **octave** host parameters; inversion automation above the available chord voices clamps to the highest valid inversion. Changing these parameters releases pad notes without automatically replaying them. Existing channel/root/transpose parameter IDs are preserved. Factory migration does not replay held notes.
+
+Names currently use printable ASCII (24 characters maximum); banks contain app settings, not E-4 hardware presets. Key/scale filtering, arpeggiator, sequencer and controller mappings remain planned. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).

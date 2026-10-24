@@ -5,6 +5,7 @@
 #include "StudioTheme.h"
 #include "PerformanceKeyboard.h"
 #include "InputNoteState.h"
+#include "ChordBankEditor.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
@@ -158,6 +159,22 @@ public:
             };
             addAndMakeVisible(pad);
         }
+        e4::PerformanceSettings savedBank;
+        if (e4::ui::parseBank(settings->getValue("chordBank"),savedBank))
+            chords.replace(savedBank,[](e4::MidiEvent,int) {});
+        updatePadNames();
+        bankButton.setButtonText("Edit / load chord bank...");
+        bankButton.onClick=[this] {
+            if (bankWindow) { bankWindow->toFront(true); return; }
+            auto safe=juce::Component::SafePointer<Companion>(this);
+            bankWindow=e4::ui::openChordBank(chords.getSettings(),static_cast<int>(root.getValue()),[safe](e4::PerformanceSettings bank) {
+                if (!safe) return;
+                safe->releasePads();
+                safe->chords.replace(bank,[safe](e4::MidiEvent event,int source) { if (safe) safe->session.process(event,source); });
+                safe->updatePadNames();
+            });
+        };
+        addAndMakeVisible(bankButton);
         addAndMakeVisible(rootLabel); addAndMakeVisible(root);
         e4::ui::keyboardStyle(keyboard);
         keyboard.setAvailableRange(36,84);
@@ -187,9 +204,11 @@ public:
         setSize(1040,780);
     }
     ~Companion() override {
+        if (bankWindow) delete bankWindow.getComponent();
         stopTimer();
         if (previewMode) { keys.removeListener(this); setLookAndFeel(nullptr); return; }
         auto* settings = preferences.getUserSettings();
+        settings->setValue("chordBank",e4::ui::bankText(chords.getSettings()));
         settings->setValue("channel",static_cast<int>(channel.getValue()));
         settings->setValue("chordRoot",static_cast<int>(root.getValue()));
         settings->setValue("transpose",static_cast<int>(transpose.getValue()));
@@ -218,12 +237,20 @@ public:
         place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
         place(bendLabel,334,278,90,20); place(bend,432,267,560,40);
         for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,398,154,78);
+        place(bankButton,732,355,260,28);
         voices.setBounds(0,0,0,0); place(voiceDisplay,768,527,224,22); place(keyboard,334,564,658,86);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
         place(status,44,701,952,38);
     }
 
 private:
+    void updatePadNames() {
+        const auto& bank=chords.getSettings();
+        for (std::size_t i=0;i<4;++i) {
+            pads[i].setButtonText(juce::String(bank.pads[i].name.data()));
+            pads[i].getProperties().set("detail",juce::String(bank.pads[i].noteCount)+" VOICES / INV "+juce::String(bank.pads[i].inversion));
+        }
+    }
     static juce::String selectedIdentifier(const juce::ComboBox& box, const juce::Array<juce::MidiDeviceInfo>& devices) {
         const int index = box.getSelectedId() - 2;
         return juce::isPositiveAndBelow(index,devices.size()) ? devices[index].identifier : juce::String{};
@@ -398,7 +425,8 @@ private:
     e4::ui::VoiceDisplay voiceDisplay;
     juce::TooltipWindow tooltips {this,600};
     std::array<juce::TextButton,4> pads;
-    juce::TextButton connect,disconnect,refresh,panic;
+    juce::TextButton connect,disconnect,refresh,panic,bankButton;
+    juce::Component::SafePointer<juce::DialogWindow> bankWindow;
     int polls = 0;
     double lastTick = juce::Time::getMillisecondCounterHiRes();
 };
