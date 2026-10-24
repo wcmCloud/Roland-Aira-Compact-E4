@@ -1,4 +1,5 @@
 #include "ClockScheduler.h"
+#include "MidiCaptureStats.h"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -62,6 +63,22 @@ int main() {
     exact.poll(std::numeric_limits<double>::infinity(),fastEmit);
     check(!exact.isRunning() && exact.hasFault(),"invalid timer value fails closed");
     for (int status : sent) check(status == 0xfa || status == 0xf8 || status == 0xfc,"only documented realtime messages emitted");
+    e4::MidiCaptureStats arrivals;
+    arrivals.observe(0xfa,0);
+    for (int n = 0; n < 25; ++n) arrivals.observe(0xf8,static_cast<double>(n)/48.0);
+    check(arrivals.clocks == 25 && arrivals.intervals == 24
+        && std::abs(arrivals.estimatedBpm()-120.0) < 1e-9,"capture estimates BPM from contiguous arrivals");
+    arrivals.observe(0xfc,0.6); arrivals.observe(0xfa,9);
+    arrivals.observe(0xf8,9);
+    check(arrivals.intervals == 24,"capture excludes silence between Stop and Start");
+    arrivals.observe(0xf8,9);
+    arrivals.observe(0xf8,std::numeric_limits<double>::quiet_NaN());
+    check(arrivals.nonpositiveIntervals == 1 && arrivals.invalidTimes == 1,"batched/nonfinite arrival times are counted, not divided by");
+    e4::MidiCaptureStats variable;
+    variable.observe(0xf8,0); variable.observe(0xf8,0.01); variable.observe(0xf8,0.04);
+    check(std::abs(variable.mean-0.02) < 1e-12 && std::abs(variable.minimum-0.01) < 1e-12
+        && std::abs(variable.maximum-0.03) < 1e-12 && std::abs(variable.stddev()-std::sqrt(0.0002)) < 1e-12,
+        "capture reports interval spread using online statistics");
     std::cout << "Clock planner: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

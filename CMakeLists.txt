@@ -46,7 +46,16 @@ set_target_properties(AiraE4_Standalone PROPERTIES
 target_link_libraries(AiraE4_Standalone PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 target_compile_definitions(AiraE4_Standalone PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 
+juce_add_console_app(e4_midi_probe PRODUCT_NAME "E4 MIDI Probe")
+target_sources(e4_midi_probe PRIVATE Tools/MidiProbe.cpp)
+target_include_directories(e4_midi_probe PRIVATE Source)
+target_link_libraries(e4_midi_probe PRIVATE juce::juce_audio_devices juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+target_compile_definitions(e4_midi_probe PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+
 if(BUILD_TESTING)
+    add_test(NAME e4_midi_probe_help COMMAND e4_midi_probe --help)
+    add_test(NAME e4_midi_probe_invalid_duration COMMAND e4_midi_probe --capture unused --seconds invalid)
+    set_tests_properties(e4_midi_probe_invalid_duration PROPERTIES WILL_FAIL TRUE)
     juce_add_console_app(e4_processor_tests PRODUCT_NAME "E4 Processor Tests")
     target_sources(e4_processor_tests PRIVATE Tests/ProcessorTests.cpp)
     target_include_directories(e4_processor_tests PRIVATE Source)

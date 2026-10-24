@@ -55,6 +55,37 @@ The scheduler accumulates absolute deadlines; it does not add a period to each w
 
 Software simulations at 60/120/180 BPM produce the expected pulse counts over ten minutes with under one microsecond of calculated deadline drift. Those results test the planner, not thread wake-up jitter, physical MIDI delivery or the E-4. Capture actual timing under load before using clock in a performance.
 
+## Debug launcher
+
+From this project folder:
+
+```sh
+./scripts/run-debug.sh               # Build and open the Debug app
+./scripts/run-debug.sh --debug       # Build and run under LLDB
+./scripts/run-debug.sh --build-only  # Build without launching
+```
+
+The script uses the verified Makefiles build, avoiding the Xcode helper/cache problem encountered in automation. It finds the existing JUCE checkout or accepts `E4_JUCE_DIR=/absolute/path/to/JUCE`. It does not download dependencies. Build-only was verified; GUI launch and debugger attachment still require a local interactive check.
+
+## MIDI diagnostics
+
+Build the receive-only tool, then list ports:
+
+```sh
+cmake --build build-check --target e4_midi_probe
+./build-check/e4_midi_probe_artefacts/Debug/e4_midi_probe --list
+```
+
+Use an **input** identifier from that listing to capture incoming MIDI for 1–600 seconds:
+
+```sh
+./build-check/e4_midi_probe_artefacts/Debug/e4_midi_probe --capture "INPUT_IDENTIFIER" --seconds 10 > capture.json
+```
+
+The tool never opens MIDI outputs. It reports note/bend/transport counts, clock arrival statistics and the first 256 short messages as JSON. Long SysEx payloads are not retained. Clock intervals reset across observed Start/Stop, so silence between sessions is excluded. Callback arrival statistics include OS/USB batching; they do not prove generated-clock accuracy. Run in your normal Terminal if a sandbox cannot reach CoreMIDI.
+
+A five-second receive-only E-4 capture succeeded; see [the validation record](docs/validation/README.md). Outgoing notes, audio and Ableton behaviour remain unverified.
+
 ## Build
 
 Prerequisites: Xcode command line tools, CMake 3.22+ and a JUCE checkout. These are now available on this Mac, with JUCE under `build/_deps/juce-src`. No additional dependency installation is needed for that checkout.
@@ -88,9 +119,9 @@ clang++ -std=c++17 -Wall -Wextra -Werror -ISource Tests/CoreTests.cpp -o build-c
 
 Core tests cover ownership, limits, filtering/release interactions, channel cleanup, note/bend boundaries, panic and 1000 stress cycles. A second test target exercises the actual JUCE processor: sample offsets, filtering, state round-trip, invalid state, bypass and overload cleanup. Run all three with CTest after building `e4_core_tests`, `e4_processor_tests` and `e4_clock_tests`.
 
-VST3, AU and standalone Debug builds pass in `build-check`; all three CTest suites pass. The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
+VST3, AU and standalone Debug builds pass in `build-check`; all five CTest checks pass (three suites plus diagnostic help/invalid-argument checks). The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
 
-Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on Apple clang 21, arm64. Hardware and DAW integration remain untested. See PLAN.md for the current milestone status.
+Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on Apple clang 21, arm64. Read-only E-4 discovery and incoming clock capture passed. Outgoing hardware and DAW integration remain untested. See PLAN.md for the current milestone status.
 
 The automated Xcode build encountered a module-cache write error in this session; a later Xcode refresh also failed during JUCE helper compiler discovery. The successful verification used a separate Makefiles build, preserving the existing Xcode project. To refresh Xcode from your own Terminal, run the CMake configuration command above with the local JUCE path. The already built standalone app in `build-check` is available independently of that refresh.
 

@@ -1,6 +1,6 @@
 # E-4 hardware and Ableton acceptance record
 
-Status: NOT RUN. Automated builds and tests do not establish hardware behaviour.
+Status: outgoing/performance acceptance NOT RUN. Read-only port discovery and a five-second incoming E-4 clock capture passed; see [validation evidence](validation/README.md). Automated builds do not establish hardware performance.
 
 Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN route, MIDI endpoint names, hardware channel, KEY IN/HARMONY state, audio interface and buffer size. Attach a MIDI monitor capture and short audio recording to each result. Use a modest listening level.
 

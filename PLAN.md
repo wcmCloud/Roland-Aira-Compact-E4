@@ -4,6 +4,9 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Added receive-only MIDI diagnostics (JSON port inventory and bounded input captures with online clock statistics), plus a Debug launcher that can build/open the app or run under LLDB. Build-only is verified; interactive debugger attachment remains pending.
+- Physical receive-path check on 24 October: discovered E-4 MIDI IN/OUT and captured 260 incoming clock pulses over five seconds at approximately 130 BPM. Raw results and limitations are saved under docs/validation. No MIDI output was opened or messages sent; outgoing notes, looper sync, audio return and Ableton acceptance remain open.
+
 - Standalone now has an opt-in 20–300 BPM internal clock master and Start/Stop controls. MIDI Start/Clock/Stop are sent through the selected port; clock runs on a dedicated high-priority thread with absolute deadlines and tempo phase preservation. No Continue, song position or incoming-clock follow is implemented.
 - Clock defaults off and never auto-restores. Panic, Stop, route/disconnect and shutdown stop transport; missed pulse intervals stop instead of producing catch-up bursts. A two-second UI heartbeat timeout also stops clock. Shared port access is serialised outside audio callbacks. Real hardware delivery may still block, and timing guarantees remain unmeasured.
 - Three test suites pass, including deterministic ten-minute 60/120/180 BPM simulations, maximum tempo, Start/Stop ordering, tempo phase changes, missed-deadline failure and explicit restart. Phase 4 is partial: physical jitter/drift captures, looper response and external-follow modes remain open.
@@ -25,7 +28,7 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 - Shared fixed-storage MIDI engine is integrated with the JUCE processor. Implemented: output channel, four distinct voices, repeated-note/input-channel ownership, velocity-zero releases, raw pitch bend, unsupported-message filtering, owned-note panic and channel-change cleanup.
 - Plug-in state saves channel, chord root and transpose. MIDI bend and note gestures are transient, not restored.
 - Host stop transitions and bypass release notes. Input bursts are bounded at 2048 events/block; overload triggers cleanup. Plug-in clock is intentionally delegated to Live port Sync. Standalone can generate an opt-in internal clock master; incoming clocks are not forwarded.
-- Verification: VST3, AU and standalone Debug builds pass on arm64 in `build-check`; all three CTest suites pass. Core tests also pass under AddressSanitizer/UndefinedBehaviorSanitizer. No host scan or hardware test has run.
+- Verification: VST3, AU and standalone Debug builds pass on arm64 in `build-check`; all three CTest suites pass. Core tests also pass under AddressSanitizer/UndefinedBehaviorSanitizer. No host scan or outgoing hardware test has run; read-only discovery and incoming clock capture passed.
 - Core regression tests and processor integration tests have been added. Full hardware test M1 remains open; M2 now has keyboard/chord performance controls in both interfaces. Preset/chord customisation and hardware/host acceptance remain open. M3 has its first MIDI-only workflow; physical hotplug, sleep and endpoint tests remain open.
 - Xcode build/refresh remains unverified in this automated session: module-cache writing and JUCE helper compiler discovery failed. The separate Makefiles build succeeds; existing Xcode project files were preserved.
 - CMake and JUCE are now installed/available locally. The CMake project now explicitly enables C as well as C++ for JUCE's VST3 helper.
@@ -154,7 +157,7 @@ Exit M6: signed packages, recorded hardware regression results and a reproducibl
 
 M1 routing proof → M2 safe note engine → M3 standalone → M4 clock → M5 host/AU polish → M6 release. Schedule estimates should follow M1 because MIDI wrapper behaviour, hardware availability and AU architecture are the primary unknowns.
 
-The current code implements the shared MIDI engine and editor described in Implementation progress above. Standalone device management and chord pads have an initial implementation. External clock following, timing measurements, AU output backend, audio return and host/hardware acceptance tests remain outstanding. No hardware was contacted and no plug-in was installed into system or user plug-in folders. Earlier phase-0 observations below describe the original scaffold baseline, not the current dependency setup.
+The current code implements the shared MIDI engine and editor described in Implementation progress above. Standalone device management and chord pads have an initial implementation. External clock following, timing measurements, AU output backend, audio return and host/hardware acceptance tests remain outstanding. Read-only CoreMIDI discovery and incoming E-4 clock capture have been performed. No MIDI output messages were sent and no plug-in was installed into system or user plug-in folders. Earlier phase-0 observations below describe the original scaffold baseline, not the current dependency setup.
 
 ## Project placement
 

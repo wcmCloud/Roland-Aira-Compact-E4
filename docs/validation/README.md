@@ -1,0 +1,17 @@
+# Local MIDI validation — 24 October 2026
+
+Environment: macOS 27.0.1, arm64, JUCE 8.0.10 Debug diagnostic build.
+
+## Verified
+
+- CoreMIDI discovery returned E-4 MIDI OUT (input to the Mac) and E-4 MIDI IN (output from the Mac).
+- A receive-only capture on E-4 MIDI OUT ran for 5.005 seconds.
+- Captured 260 clock messages and 259 positive intervals; no notes, bend, Start or Stop were observed.
+- Mean callback interval: 19.231008 ms, corresponding to approximately 129.998 BPM at 24 PPQN.
+- Observed callback interval range: 18.869583–20.108458 ms; sample standard deviation: 0.430179 ms.
+
+These are local receive-callback arrival times. They include USB/CoreMIDI/OS scheduling effects and do not measure the standalone application's generated clock, hardware transmission timestamps or round-trip latency. No MIDI output port was opened and no messages were sent. Firmware, vocoder setup, outgoing notes, audio return, looper transport and Ableton routing remain unverified.
+
+The first sandboxed discovery attempt returned no endpoints because CoreMIDI access was restricted. Running with access to the Mac MIDI service succeeded; empty arrays alone do not prove the E-4 is disconnected.
+
+Raw records: [port inventory](midi-ports-2026-10-24.json) and [five-second receive capture](e4-receive-2026-10-24.json). IDs are local endpoint identifiers and can change after reconnecting/reconfiguration.
