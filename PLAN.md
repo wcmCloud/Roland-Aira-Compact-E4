@@ -4,6 +4,9 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Redesigned both interfaces with a shared native JUCE theme: dark panels, lime/teal/lavender/amber pad accents, rounded controls, a full-width keyboard and clearer connection/voice/transport status. Standalone now groups routing and clock in a sidebar; plug-in controls follow the same visual hierarchy. The MIDI engine, IDs and state schema are unchanged.
+- Added a UI rendering tool that exports the real standalone and plug-in components without opening MIDI devices or loading/saving standalone preferences. Both default-size snapshots have been visually inspected. Live mouse/keyboard and window-resizing acceptance remain separate manual checks.
+
 - Hardened rejected-note bookkeeping: repeated presses of a rejected fifth voice remain blocked until that input's outstanding releases drain. Source cleanup clears rejected history, and counter saturation triggers panic rather than losing ownership. Core/processor regressions reproduce and verify the fix.
 - Added VST3 software-host validation that discovers and loads the actual bundle, checks notes at 15 sample-rate/buffer combinations, pitch bend, CC filtering, automation and state round-trip. All 24 wrapper checks and all six CTest checks pass. Results are saved under docs/validation; Ableton, Steinberg/AU validation and outgoing hardware acceptance remain pending.
 - Fixed UTF-8 decoding for the bullet/dash labels in both interfaces; all formats rebuilt.
@@ -27,7 +30,7 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 - Added four momentary chord pads (Major, Minor, Sus2, Maj7) with a selectable root. Pad note snapshots and independent ownership protect external/keyboard notes during releases. All sources share the four-voice limit.
 - Desired endpoint IDs, channel and chord root persist. Outputs never auto-connect. Route changes release the old port before closing; unplug detection and long UI pauses require explicit reconnection. Shutdown/panic clear held notes. App instance duplication is disabled, but cross-app endpoint arbitration is not implemented.
 - Standalone notes use a bounded callback queue and 5 ms UI drain; internal clock uses a dedicated thread. Incoming transport following and latency/jitter certification remain open. Device presence is polled approximately once a second; hardware cleanup cannot be guaranteed after physical removal.
-- Regression coverage now includes fake-endpoint route switching/disconnect, no replay, keyboard/external ownership, queue overflow/recovery and chord snapshot/overlap release. Native visual inspection timed out, so the app window and real hardware workflow remain unverified.
+- Regression coverage now includes fake-endpoint route switching/disconnect, no replay, keyboard/external ownership, queue overflow/recovery and chord snapshot/overlap release. Earlier native app automation timed out; offline component snapshots are now visually verified. Live interaction and real hardware workflow remain unverified.
 
 - Shared fixed-storage MIDI engine is integrated with the JUCE processor. Implemented: output channel, four distinct voices, repeated-note/input-channel ownership, velocity-zero releases, raw pitch bend, unsupported-message filtering, owned-note panic and channel-change cleanup.
 - Plug-in state saves channel, chord root and transpose. MIDI bend and note gestures are transient, not restored.

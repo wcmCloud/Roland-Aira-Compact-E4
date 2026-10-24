@@ -2,6 +2,17 @@
 
 JUCE C++17 starter for a Roland AIRA E-4 hardware companion: VST3, AU and Standalone on macOS. See [PLAN.md](PLAN.md) for capabilities, architecture, Ableton setup and phased work.
 
+## Interface
+
+The standalone and plug-in share a custom dark studio theme with lime accents, tinted momentary chord pads, rounded numeric controls and a full-width keyboard. Standalone groups device routing and clock in a sidebar; both versions keep performance controls and Panic prominent. Bend displays Centre or a percentage while retaining its existing MIDI range. Connection status describes the opened MIDI route, not a hardware handshake.
+
+Standalone defaults to 1040 × 780 and can resize; the plug-in is 960 × 650. Component-rendered previews are in [docs/ui](docs/ui). To regenerate them without opening devices or reading/writing standalone preferences:
+
+```sh
+cmake --build build-check --target e4_ui_preview
+./build-check/e4_ui_preview_artefacts/Debug/e4_ui_preview "$PWD/docs/ui"
+```
+
 ## Documentation
 
 [Roland E-4 owner’s manual (PDF)](docs/E-4_eng01_W.pdf) — local reference manual supplied for this project.

@@ -2,6 +2,7 @@
 #include "MidiSession.h"
 #include "ChordPads.h"
 #include "ClockScheduler.h"
+#include "StudioTheme.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
@@ -84,21 +85,29 @@ private:
 class Companion final : public juce::Component, private juce::Timer,
                         private juce::MidiInputCallback, private juce::MidiKeyboardState::Listener {
 public:
-    Companion() : keyboard(keys, juce::MidiKeyboardComponent::horizontalKeyboard) {
+    explicit Companion(bool preview = false) : previewMode(preview), keyboard(keys, juce::MidiKeyboardComponent::horizontalKeyboard) {
         juce::PropertiesFile::Options options;
         options.applicationName = "E4Companion";
         options.filenameSuffix = "settings";
         options.osxLibrarySubFolder = "Application Support";
-        preferences.setStorageParameters(options);
-        auto* settings = preferences.getUserSettings();
+        setLookAndFeel(&theme);
+        if (!previewMode) preferences.setStorageParameters(options);
+        juce::PropertySet previewSettings;
+        auto* settings = previewMode ? &previewSettings : preferences.getUserSettings();
         title.setText(juce::String::fromUTF8("E-4 Companion • Standalone"), juce::dontSendNotification);
-        help.setText("Enable VOCODER + KEY IN + HARMONY on the E-4. Match its MIDI channel.\n"
-                     "Choose a MIDI output and press Connect. Audio stays on the hardware.\n"
-                     "Keep internal clock off when Live or another device is the clock master.", juce::dontSendNotification);
-        inputLabel.setText("MIDI input", juce::dontSendNotification);
-        outputLabel.setText("MIDI output", juce::dontSendNotification);
-        channelLabel.setText("Hardware channel", juce::dontSendNotification);
-        bendLabel.setText("Pitch bend", juce::dontSendNotification);
+        help.setText("Enable VOCODER, KEY IN and HARMONY. Audio comes from your E-4.",juce::dontSendNotification);
+        inputLabel.setText("INPUT DEVICE",juce::dontSendNotification);
+        outputLabel.setText("OUTPUT DEVICE",juce::dontSendNotification);
+        channelLabel.setText("MIDI CHANNEL",juce::dontSendNotification);
+        bendLabel.setText("PITCH BEND",juce::dontSendNotification);
+        transposeLabel.setText("TRANSPOSE",juce::dontSendNotification);
+        addAndMakeVisible(transposeLabel);
+        for (auto* label : {&help,&inputLabel,&outputLabel,&channelLabel,&bendLabel,&rootLabel,&transposeLabel,&clockState}) e4::ui::label(*label,true);
+        e4::ui::label(status); e4::ui::label(voices);
+        voices.setJustificationType(juce::Justification::right);
+        connect.getProperties().set("role","primary"); start.getProperties().set("role","primary");
+        panic.getProperties().set("role","danger");
+        for (auto* slider : {&channel,&root,&transpose,&bend,&tempo}) slider->setLookAndFeel(&theme);
         channel.setRange(1, 16, 1);
         channel.setSliderStyle(juce::Slider::IncDecButtons);
         channel.setTextBoxStyle(juce::Slider::TextBoxLeft, false, 60, 26);
@@ -121,7 +130,8 @@ public:
             session.setChannel(static_cast<int>(channel.getValue()));
             bend.setValue(8192, juce::dontSendNotification);
         };
-        bend.setRange(0,16383,1);
+        bend.setTextBoxStyle(juce::Slider::TextBoxRight,false,76,32);
+        bend.setRange(0,16383,1); e4::ui::bendStyle(bend);
         bend.setValue(8192,juce::dontSendNotification);
         bend.setDoubleClickReturnValue(true,8192);
         bend.onValueChange = [this] {
@@ -133,21 +143,21 @@ public:
         connect.onClick = [this] { connectSelected(); };
         disconnect.setButtonText("Disconnect");
         disconnect.onClick = [this] { disconnectPorts("Disconnected. Choose ports and press Connect."); };
-        refresh.setButtonText("Refresh ports");
+        refresh.setButtonText("Refresh");
         refresh.onClick = [this] { refreshPorts(); };
         panic.setButtonText("Panic / release notes");
         panic.onClick = [this] {
             stopTransport();
             bend.setValue(8192,juce::dontSendNotification);
         };
-        clockEnable.setButtonText("Internal clock (sole master)");
+        clockEnable.setButtonText("Internal clock master");
         clockEnable.setToggleState(false,juce::dontSendNotification);
         clockEnable.onClick = [this] { if (!clockEnable.getToggleState()) stopTransport(); };
         tempo.setRange(20,300,0.1);
         tempo.setValue(juce::jlimit(20.0,300.0,settings->getDoubleValue("tempo",120.0)),juce::dontSendNotification);
         tempo.setTextValueSuffix(" BPM");
         tempo.onValueChange = [this] { if (sink) sink->setTempo(tempo.getValue()); };
-        start.setButtonText("Start (restart)");
+        start.setButtonText("Start");
         start.onClick = [this] {
             if (!sink || !clockEnable.getToggleState()) {
                 status.setText("Connect an output and enable internal clock before Start.",juce::dontSendNotification); return;
@@ -157,7 +167,7 @@ public:
         };
         stop.setButtonText("Stop"); stop.onClick = [this] { stopTransport(); };
         for (auto* c : std::array<juce::Component*,5>{&clockEnable,&tempo,&start,&stop,&clockState}) addAndMakeVisible(c);
-        rootLabel.setText("Chord root (MIDI note)",juce::dontSendNotification);
+        rootLabel.setText("CHORD ROOT",juce::dontSendNotification);
         root.setRange(36,84,1);
         root.setValue(juce::jlimit(36,84,settings->getIntValue("chordRoot",60)),juce::dontSendNotification);
         root.setSliderStyle(juce::Slider::IncDecButtons);
@@ -166,6 +176,8 @@ public:
         const std::array<juce::String,4> names {"Major","Minor","Sus2","Maj7"};
         for (int i = 0; i < 4; ++i) {
             auto& pad = pads[static_cast<std::size_t>(i)];
+            pad.getProperties().set("role","pad"); pad.getProperties().set("index",i);
+            pad.getProperties().set("detail",i == 2 ? "SUSPENDED" : i == 3 ? "FOUR VOICES" : "TRIAD");
             pad.setButtonText(names[static_cast<std::size_t>(i)]);
             pad.onStateChange = [this,i] {
                 chords.setHeld(i,pads[static_cast<std::size_t>(i)].isDown(),static_cast<int>(root.getValue()),
@@ -174,6 +186,7 @@ public:
             addAndMakeVisible(pad);
         }
         addAndMakeVisible(rootLabel); addAndMakeVisible(root);
+        e4::ui::keyboardStyle(keyboard);
         keyboard.setAvailableRange(36,84);
         keyboard.setScrollButtonsVisible(false);
         keyboard.setMidiChannel(1); // Separate ownership source, independent of hardware channel.
@@ -182,7 +195,8 @@ public:
                 &inputs,&outputs,&connect,&disconnect,&refresh,&channelLabel,&channel,&bendLabel,&bend,
                 &panic,&status,&keyboard}) addAndMakeVisible(component);
         addAndMakeVisible(voices);
-        refreshPorts();
+        if (!previewMode) refreshPorts();
+        else { inputs.addItem("None",1); outputs.addItem("Choose a MIDI output",1); }
         rememberedInput = settings->getValue("input");
         rememberedOutput = settings->getValue("output");
         selectRemembered(inputs,inputDevices,rememberedInput);
@@ -190,11 +204,15 @@ public:
         inputs.onChange = [this] { rememberedInput = selectedIdentifier(inputs,inputDevices); };
         outputs.onChange = [this] { rememberedOutput = selectedIdentifier(outputs,outputDevices); };
         status.setText("Disconnected. Restored choices never auto-connect or replay notes.",juce::dontSendNotification);
-        startTimer(5);
-        setSize(740,630);
+        voices.setText("0 / 4 voices",juce::dontSendNotification);
+        clockState.setText("Clock stopped. Use one clock master.",juce::dontSendNotification);
+        start.setEnabled(false); stop.setEnabled(false);
+        if (!previewMode) startTimer(5);
+        setSize(1040,780);
     }
     ~Companion() override {
         stopTimer();
+        if (previewMode) { keys.removeListener(this); setLookAndFeel(nullptr); return; }
         auto* settings = preferences.getUserSettings();
         settings->setValue("channel",static_cast<int>(channel.getValue()));
         settings->setValue("chordRoot",static_cast<int>(root.getValue()));
@@ -204,38 +222,31 @@ public:
         settings->setValue("output",rememberedOutput);
         preferences.saveIfNeeded();
         disconnectPorts({});
-        keys.removeListener(this);
+        keys.removeListener(this); setLookAndFeel(nullptr);
     }
+    void paint(juce::Graphics& g) override { e4::ui::surface(g,getWidth(),getHeight(),true,!activeOutput.isEmpty()); }
     void resized() override {
-        auto area = getLocalBounds().reduced(20);
-        title.setBounds(area.removeFromTop(30));
-        help.setBounds(area.removeFromTop(74));
-        auto row = area.removeFromTop(32);
-        inputLabel.setBounds(row.removeFromLeft(110)); inputs.setBounds(row);
-        area.removeFromTop(8); row = area.removeFromTop(32);
-        outputLabel.setBounds(row.removeFromLeft(110)); outputs.setBounds(row);
-        area.removeFromTop(10); row = area.removeFromTop(30);
-        connect.setBounds(row.removeFromLeft(130)); row.removeFromLeft(8);
-        disconnect.setBounds(row.removeFromLeft(130)); row.removeFromLeft(8);
-        refresh.setBounds(row.removeFromLeft(130));
-        area.removeFromTop(12); row = area.removeFromTop(30);
-        channelLabel.setBounds(row.removeFromLeft(140)); channel.setBounds(row.removeFromLeft(110));
-        row.removeFromLeft(16); panic.setBounds(row.removeFromLeft(210));
-        area.removeFromTop(8); row = area.removeFromTop(32);
-        bendLabel.setBounds(row.removeFromLeft(110)); bend.setBounds(row);
-        status.setBounds(area.removeFromTop(30));
-        voices.setBounds(area.removeFromTop(24));
-        row = area.removeFromTop(30);
-        rootLabel.setBounds(row.removeFromLeft(180)); root.setBounds(row.removeFromLeft(120)); row.removeFromLeft(20); transpose.setBounds(row.removeFromLeft(180));
-        area.removeFromTop(6); row = area.removeFromTop(34);
-        for (auto& pad : pads) { pad.setBounds(row.removeFromLeft(160).reduced(3,0)); }
-        area.removeFromTop(8); row = area.removeFromTop(32);
-        clockEnable.setBounds(row.removeFromLeft(250)); tempo.setBounds(row.removeFromLeft(190));
-        start.setBounds(row.removeFromLeft(135)); stop.setBounds(row);
-        clockState.setBounds(area.removeFromTop(26));
-        area.removeFromTop(8);
-        keyboard.setBounds(area.reduced(0,4));
+        const auto place = [this](juce::Component& c,int x,int y,int w,int h) { c.setBounds(e4::ui::bounds(x,y,w,h,getWidth(),getHeight(),true)); };
+        title.setBounds(0,0,0,0);
+        place(panic,816,28,200,36);
+        place(refresh,200,115,74,28);
+        place(inputLabel,44,163,230,18); place(inputs,44,187,230,38);
+        place(outputLabel,44,243,230,18); place(outputs,44,267,230,38);
+        place(connect,44,319,112,28); place(disconnect,164,319,110,28);
+        place(clockEnable,44,426,230,28); place(tempo,44,466,230,40);
+        place(start,44,528,112,36); place(stop,164,528,110,36);
+        place(clockState,44,584,230,62);
+        place(help,334,146,658,28);
+        place(channelLabel,334,187,160,18); place(channel,334,211,160,36);
+        place(rootLabel,514,187,160,18); place(root,514,211,160,36);
+        place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
+        place(bendLabel,334,278,90,20); place(bend,432,267,560,40);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,398,154,78);
+        place(voices,820,527,172,22); place(keyboard,334,564,658,86);
+        keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
+        place(status,44,701,952,38);
     }
+
 private:
     static juce::String selectedIdentifier(const juce::ComboBox& box, const juce::Array<juce::MidiDeviceInfo>& devices) {
         const int index = box.getSelectedId() - 2;
@@ -353,9 +364,13 @@ private:
         clockState.setText(sink && sink->clockRunning() ? "Clock: internal master running (24 PPQN)" : juce::String::fromUTF8("Clock: stopped — incoming clock is not forwarded"),juce::dontSendNotification);
         juce::MidiBuffer unused;
         keys.processNextMidiBuffer(unused,0,1,false); // Clear keyboard's indirect-event history.
-        voices.setText("Active voices: " + juce::String(session.activeVoices()) + juce::String::fromUTF8(" / 4 — keyboard and pads share this limit"),juce::dontSendNotification);
+        voices.setText(juce::String(session.activeVoices()) + " / 4 voices",juce::dontSendNotification);
+        const bool connected = sink != nullptr;
+        if (connected != lastConnection) { lastConnection = connected; repaint(); }
         if (++polls == 200) { polls = 0; refreshPorts(); }
     }
+    e4::ui::Theme theme;
+    bool previewMode = false,lastConnection = false;
     juce::ApplicationProperties preferences;
     e4::MidiSession session;
     e4::ChordPads chords;
@@ -373,7 +388,7 @@ private:
     juce::ToggleButton clockEnable;
     juce::TextButton start,stop;
     juce::Label clockState;
-    juce::Label rootLabel;
+    juce::Label rootLabel,transposeLabel;
     std::array<juce::TextButton,4> pads;
     juce::TextButton connect,disconnect,refresh,panic;
     int polls = 0;
@@ -383,11 +398,11 @@ private:
 class Window final : public juce::DocumentWindow {
 public:
     explicit Window(std::function<void()> close)
-        : DocumentWindow("E-4 Companion",juce::Colour(0xff20252b),allButtons),onClose(std::move(close)) {
+        : DocumentWindow("E-4 Companion",e4::ui::background,allButtons),onClose(std::move(close)) {
         setUsingNativeTitleBar(true);
         setContentOwned(new Companion(),true);
         setResizable(true,false);
-        setResizeLimits(740,630,1100,900);
+        setResizeLimits(1040,780,1440,1080);
         centreWithSize(getWidth(),getHeight());
         setVisible(true);
     }
@@ -408,4 +423,8 @@ private:
     std::unique_ptr<Window> window;
 };
 }
+#if defined(E4_UI_PREVIEW)
+std::unique_ptr<juce::Component> createStandalonePreview() { return std::make_unique<Companion>(true); }
+#else
 START_JUCE_APPLICATION(App)
+#endif

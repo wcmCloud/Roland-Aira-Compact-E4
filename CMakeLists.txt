@@ -53,6 +53,11 @@ target_link_libraries(e4_midi_probe PRIVATE juce::juce_audio_devices juce::juce_
 target_compile_definitions(e4_midi_probe PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 
 if(BUILD_TESTING)
+    juce_add_console_app(e4_ui_preview PRODUCT_NAME "E4 UI Preview")
+    target_sources(e4_ui_preview PRIVATE Tools/UiPreview.cpp Source/StandaloneMain.cpp)
+    target_include_directories(e4_ui_preview PRIVATE Source)
+    target_compile_definitions(e4_ui_preview PRIVATE E4_UI_PREVIEW=1)
+    target_link_libraries(e4_ui_preview PRIVATE AiraE4 juce::juce_audio_utils)
     juce_add_console_app(e4_vst3_check PRODUCT_NAME "E4 VST3 Check")
     target_sources(e4_vst3_check PRIVATE Tools/Vst3Check.cpp)
     target_link_libraries(e4_vst3_check PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags)

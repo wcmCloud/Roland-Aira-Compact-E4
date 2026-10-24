@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "StudioTheme.h"
 
 namespace {
 class E4Editor final : public juce::AudioProcessorEditor, private juce::Timer,
@@ -7,53 +8,65 @@ public:
     explicit E4Editor(E4Processor& p)
         : AudioProcessorEditor(p), owner(p), keyboard(keys,juce::MidiKeyboardComponent::horizontalKeyboard),
           channelAttachment(p.parameters, "channel", channel), rootAttachment(p.parameters,"chordRoot",root), transposeAttachment(p.parameters,"transpose",transpose) {
+        setLookAndFeel(&theme);
         title.setText("E-4 Companion",juce::dontSendNotification);
-        info.setText("Enable VOCODER, KEY IN and HARMONY on the E-4.\n"
-                     "Route VST3 MIDI output to hardware; use Live port Sync for clock.\n"
-                     "AU MIDI output is pending. Audio comes from the physical E-4.",juce::dontSendNotification);
+        info.setText("VST3: route MIDI to your E-4. Clock comes from your host. AU output is experimental.",juce::dontSendNotification);
+        channelLabel.setText("MIDI CHANNEL",juce::dontSendNotification);
+        rootLabel.setText("CHORD ROOT",juce::dontSendNotification);
+        transposeLabel.setText("TRANSPOSE",juce::dontSendNotification);
+        bendLabel.setText("PITCH BEND",juce::dontSendNotification);
+        for (auto* label : {&info,&channelLabel,&rootLabel,&transposeLabel,&bendLabel}) { e4::ui::label(*label,true); addAndMakeVisible(label); }
+        e4::ui::label(status); status.setJustificationType(juce::Justification::right);
+        status.setText(juce::String(owner.activeVoices()) + " / 4 voices",juce::dontSendNotification);
         for (auto* slider : {&channel,&root,&transpose}) {
+            slider->setLookAndFeel(&theme);
             slider->setSliderStyle(juce::Slider::IncDecButtons);
             slider->setTextBoxStyle(juce::Slider::TextBoxLeft,false,120,26);
         }
-        channel.setTextValueSuffix("  MIDI ch"); root.setTextValueSuffix("  chord root"); transpose.setTextValueSuffix("  semitones");
-        bend.setRange(0,16383,1); bend.setValue(8192,juce::dontSendNotification);
-        bend.setTextValueSuffix("  bend"); bend.setDoubleClickReturnValue(true,8192);
+        channel.setTextValueSuffix(""); root.setTextValueSuffix("  MIDI note"); transpose.setTextValueSuffix(" st");
+        bend.setLookAndFeel(&theme);
+        bend.setRange(0,16383,1); e4::ui::bendStyle(bend); bend.setValue(8192,juce::dontSendNotification);
+        bend.setTextValueSuffix(""); bend.setTextBoxStyle(juce::Slider::TextBoxRight,false,76,32); bend.setDoubleClickReturnValue(true,8192);
         bend.onValueChange = [this] { send({e4::PerformanceCommand::bend,static_cast<int>(bend.getValue()),0}); };
         bend.onDragEnd = [this] { bend.setValue(8192); };
+        panic.getProperties().set("role","danger");
         panic.setButtonText("Panic / release notes");
         panic.onClick = [this] { keys.allNotesOff(0); owner.requestPanic(); bend.setValue(8192,juce::dontSendNotification); };
         const std::array<juce::String,4> names {"Major","Minor","Sus2","Maj7"};
         for (int i = 0; i < 4; ++i) {
             auto& pad = pads[static_cast<std::size_t>(i)];
+            pad.getProperties().set("role","pad"); pad.getProperties().set("index",i);
+            pad.getProperties().set("detail",i == 2 ? "SUSPENDED" : i == 3 ? "FOUR VOICES" : "TRIAD");
             pad.setButtonText(names[static_cast<std::size_t>(i)]);
             pad.onStateChange = [this,i] { send({pads[static_cast<std::size_t>(i)].isDown()
                 ? e4::PerformanceCommand::padDown : e4::PerformanceCommand::padUp,i,100}); };
             addAndMakeVisible(pad);
         }
+        e4::ui::keyboardStyle(keyboard);
         keys.addListener(this);
         keyboard.setAvailableRange(36,84); keyboard.setScrollButtonsVisible(false);
         for (auto* c : std::array<juce::Component*,9>{&title,&info,&channel,&root,&transpose,&panic,&bend,&status,&keyboard})
             addAndMakeVisible(c);
-        setSize(740,460);
+        setSize(960,650);
         startTimerHz(20);
     }
     ~E4Editor() override {
-        stopTimer(); keys.removeListener(this); owner.requestUiRelease();
+        stopTimer(); keys.removeListener(this); owner.requestUiRelease(); setLookAndFeel(nullptr);
     }
+    void paint(juce::Graphics& g) override { e4::ui::surface(g,getWidth(),getHeight(),false,false); }
     void resized() override {
-        auto area = getLocalBounds().reduced(20);
-        title.setBounds(area.removeFromTop(30)); info.setBounds(area.removeFromTop(74));
-        auto row = area.removeFromTop(32);
-        channel.setBounds(row.removeFromLeft(180)); row.removeFromLeft(12);
-        root.setBounds(row.removeFromLeft(180)); row.removeFromLeft(12);
-        panic.setBounds(row);
-        area.removeFromTop(8); transpose.setBounds(area.removeFromTop(30).removeFromLeft(220));
-        area.removeFromTop(12); bend.setBounds(area.removeFromTop(32));
-        area.removeFromTop(12); row = area.removeFromTop(36);
-        for (auto& pad : pads) pad.setBounds(row.removeFromLeft(170).reduced(3,0));
-        status.setBounds(area.removeFromTop(32));
-        keyboard.setBounds(area.reduced(0,8));
+        const auto place = [this](juce::Component& c,int x,int y,int w,int h) { c.setBounds(e4::ui::bounds(x,y,w,h,getWidth(),getHeight(),false)); };
+        title.setBounds(0,0,0,0);
+        place(panic,736,28,200,36); place(info,44,144,870,24);
+        place(channelLabel,44,179,220,18); place(channel,44,202,220,36);
+        place(rootLabel,286,179,220,18); place(root,286,202,220,36);
+        place(transposeLabel,528,179,220,18); place(transpose,528,202,220,36);
+        place(bendLabel,44,265,100,22); place(bend,156,255,760,38);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,370,209,78);
+        place(status,560,499,354,22); place(keyboard,44,534,872,58);
+        keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
     }
+
 private:
     void send(e4::PerformanceCommand command) { owner.postPerformance(command); }
     void handleNoteOn(juce::MidiKeyboardState*,int,int note,float velocity) override {
@@ -64,13 +77,13 @@ private:
     }
     void timerCallback() override {
         juce::MidiBuffer unused; keys.processNextMidiBuffer(unused,0,1,false);
-        status.setText("Active voices: " + juce::String(owner.activeVoices())
-            + juce::String::fromUTF8(" / 4 — clips, keyboard and pads share this limit"),juce::dontSendNotification);
+        status.setText(juce::String(owner.activeVoices()) + " / 4 voices",juce::dontSendNotification);
     }
+    e4::ui::Theme theme;
     E4Processor& owner;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard;
-    juce::Label title,info,status;
+    juce::Label title,info,status,channelLabel,rootLabel,transposeLabel,bendLabel;
     juce::Slider channel,root,bend,transpose;
     juce::TextButton panic;
     std::array<juce::TextButton,4> pads;
