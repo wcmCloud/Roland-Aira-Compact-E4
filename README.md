@@ -202,3 +202,7 @@ Controller pads have separate note ownership from the screen pads and live keybo
 In the plug-in, mapped transpose/inversion values are processing-thread overrides, shown in the UI and saved with the project. They do not call host-notification APIs from the audio thread. A changed host parameter value takes priority for that processing block and replaces the corresponding override; unchanged host values allow subsequent controller changes. This is block-level precedence, not sample-accurate host automation.
 
 The built VST3 passes mapped pad timing/consumption and CC20 delivery in a JUCE software host. Live may reserve controls for its control-surface/Remote mappings; physical keyboard CC delivery in Live still needs verification. Use Live's MIDI Map mode for exposed host parameters if a CC does not reach the plug-in. See [the saved Live set and routing notes](docs/ableton/README.md), including the unresolved E-4 USB audio input issue.
+
+## Formal validation and installation
+
+Apple AU validation and Steinberg VST3 validation pass (47 VST3 checks, zero failures). All eight project checks and the installed VST3 wrapper check pass. For repeatable development installation with backups, use `python3 scripts/install-dev-plugins.py` (add `--au` for experimental AU). See [results and installation/restore instructions](docs/validation/formal-2026-10-24/README.md). Clean-account distribution testing and signing/notarisation remain open.

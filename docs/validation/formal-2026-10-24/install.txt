@@ -1,0 +1,3 @@
+/Users/chris/Documents/GitHub/Aira E4/build-check/AiraE4_artefacts/Debug/VST3/E-4 Companion.vst3: replacing existing signature
+/Users/chris/Documents/GitHub/Aira E4/build-check/AiraE4_artefacts/Debug/AU/E-4 Companion.component: replacing existing signature
+Installed and verified. Backup/manifest: /Users/chris/Documents/GitHub/Aira E4/build-check/plugin-install-backups/20261024-153925-277319

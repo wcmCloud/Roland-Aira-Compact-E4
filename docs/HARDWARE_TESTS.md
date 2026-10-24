@@ -1,6 +1,6 @@
 # E-4 hardware and Ableton acceptance record
 
-Status: outgoing/performance acceptance NOT RUN. Read-only port discovery and a five-second incoming E-4 clock capture passed; see [validation evidence](validation/README.md). Automated builds do not establish hardware performance.
+Status: partial hardware acceptance. On 24 October 2026, the user confirmed four-note playback on the E-4 in the current Live test session, listening through speakers connected directly to the E-4. This is user-confirmed audible verification; no MIDI/audio recording was captured. Other acceptance checks remain pending. Read-only port discovery and incoming E-4 clock capture also passed; see [validation evidence](validation/README.md).
 
 Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN route, MIDI endpoint names, hardware channel, KEY IN/HARMONY state, audio interface and buffer size. Attach a MIDI monitor capture and short audio recording to each result. Use a modest listening level.
 
@@ -39,6 +39,8 @@ Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN rout
 
 ## AU and release gates
 
+24 October 2026 update: Apple auval and the official Steinberg validator pass; fresh development bundle installation with backup/hash verification passes on this existing account. See [formal results](validation/formal-2026-10-24/README.md). Clean-account installation and distribution signing remain pending. This supersedes the pending format-validation statements below.
+
 The AU builds but does not yet have a supported direct MIDI-output path in Live. Do not mark AU performance acceptance complete merely because scanning succeeds. AU validation, the Steinberg VST3 validator, native UI inspection, clock timing measurements, signing/notarisation and cross-app endpoint ownership remain separate release gates.
 
 ## Result log
@@ -48,12 +50,12 @@ The AU builds but does not yet have a supported direct MIDI-output path in Live.
 | Standalone basic notes/chords | Pending | NOT RUN | |
 | Standalone cleanup/hotplug | Pending | NOT RUN | |
 | Transpose / note boundaries | Pending | NOT RUN | |
-| Live VST3 routing/performance | Pending | NOT RUN | |
+| Live VST3 four-note playback | Live 12.4.7 Lite; E-4 USB MIDI route, channel 3; speakers on E-4 | PASS (user confirmed, 24 October 2026) | No recorded capture; fifth-note rejection, bend and cleanup remain unverified |
 | Live editor-close / transport | Pending | NOT RUN | |
 | State persistence/migration | Pending | NOT RUN |
 | Standalone clock timing/transport | Pending | NOT RUN | |
 
-Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passed. See [wrapper results](validation/vst3-wrapper-2026-10-24.json). The hardware result rows above remain unchanged.
+Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passed. See [wrapper results](validation/vst3-wrapper-2026-10-24.json). Hardware results are recorded separately above.
 
 ## Sender regression checks (physical results still pending)
 

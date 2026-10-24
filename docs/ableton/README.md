@@ -59,8 +59,11 @@ host parameters in this version.
   was restored to its working Mac microphone/system output configuration; the
   audio return remains unverified and Monitor Off.
 
-Pending: user confirmation of the E-4 MIDI-receive blink/pitched voice, a full
-four-note chord and bend recording, physical-controller learn/CC delivery,
+- On 24 October 2026, the user confirmed four-note playback while listening
+  through speakers connected directly to the E-4. No audio recording was captured;
+  the MIDI indicator blink was not separately confirmed.
+
+Pending: bend verification and chord/bend recording, physical-controller learn/CC delivery,
 stop/Panic cleanup, Live save/reopen audible playback and USB audio/device diagnosis.
 AU is still experimental for MIDI output and was not installed or advertised
 as a working Live send route.

@@ -1,5 +1,7 @@
 # E-4 Companion — implementation plan
 
+Latest hardware update (24 October 2026): user confirmed four-note playback in the current Live session through speakers connected directly to the E-4. No recorded capture; bend, fifth-note rejection, cleanup, clock and USB audio return remain pending. This supersedes older statements below that all audible hardware checks are pending.
+
 
 ### Performance expansion: P5 controller mappings / verification (24 October 2026)
 
@@ -38,6 +40,10 @@
 - Debug standalone, AU and VST3 rebuilt; all seven CTest checks pass, plus the core suite under AddressSanitizer/UndefinedBehaviorSanitizer. Hardware and Live acceptance remain open.
 
 Status: standalone internal clock and transport implemented, 24 October 2026. Target: macOS VST3, AU and standalone using JUCE/C++17. Hardware/host validation is still pending.
+
+## Formal validation update — 24 October 2026
+
+Official Steinberg VST3 validator: 47 passed, zero failed after fixing the empty factory-program name. Apple auval passes. Both development bundles were freshly installed with backups, strict signature checks and per-file hashes; installed VST3 wrapper checks and all eight CTest checks pass. See [validation record](docs/validation/formal-2026-10-24/README.md). Clean-account installation, signing/notarisation and AU MIDI routing remain open. This supersedes older pending-validator statements below.
 
 ## Implementation progress
 
