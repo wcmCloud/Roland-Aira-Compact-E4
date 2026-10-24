@@ -97,6 +97,27 @@ int main(int argc,char** argv) {
     check(restored,"VST3 state round-trip restores transpose");
     midi.clear(); midi.addEvent(juce::MidiMessage::noteOff(1,60),0);
     plugin->processBlock(audio,midi);
+    juce::AudioProcessorParameter* scaleMode=nullptr;
+    for (auto* parameter : plugin->getParameters()) if (parameter->getName(128)=="Scale mode") scaleMode=parameter;
+    check(scaleMode!=nullptr,"scale mode parameter exposed by actual VST3");
+    if (transpose) transpose->setValueNotifyingHost(0.5f);
+    if (scaleMode) scaleMode->setValueNotifyingHost(1.0f); // Nearest, default C major.
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,61,static_cast<juce::uint8>(100)),5);
+    midi.addEvent(juce::MidiMessage::noteOff(1,61),10); plugin->processBlock(audio,midi);
+    bool snappedOn=false,snappedOff=false;
+    for (const auto event : midi) {
+        snappedOn=snappedOn || (event.getMessage().isNoteOn() && event.getMessage().getNoteNumber()==60 && event.samplePosition==5);
+        snappedOff=snappedOff || (event.getMessage().isNoteOff() && event.getMessage().getNoteNumber()==60 && event.samplePosition==10);
+    }
+    check(snappedOn && snappedOff,"actual VST3 scale processing preserves mapped release and sample offsets");
+    juce::MemoryBlock scaleState; plugin->getStateInformation(scaleState);
+    if (scaleMode) scaleMode->setValueNotifyingHost(0.0f);
+    plugin->setStateInformation(scaleState.getData(),static_cast<int>(scaleState.getSize()));
+    check(scaleMode && scaleMode->getValue()==1.0f,"actual VST3 state restores scale mode");
+    if (scaleMode) scaleMode->setValueNotifyingHost(0.5f); // Reject.
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,61,static_cast<juce::uint8>(100)),5); plugin->processBlock(audio,midi);
+    bool rejected=true; for (const auto event : midi) if (event.getMessage().isNoteOn()) rejected=false;
+    check(rejected,"actual VST3 rejects out-of-scale note");
     plugin->releaseResources(); plugin.reset();
     auto* report = new juce::DynamicObject();
     report->setProperty("plugin",descriptions[0]->name);

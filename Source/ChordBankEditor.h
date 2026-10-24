@@ -17,15 +17,15 @@ inline bool parseBank(const juce::String& encodedText, PerformanceSettings& sett
 }
 class ChordBankEditor final : public juce::Component {
 public:
-    ChordBankEditor(PerformanceSettings initial, int rootNote, std::function<void(PerformanceSettings)> accepted)
-        : root(rootNote), apply(std::move(accepted)) {
+    ChordBankEditor(PerformanceSettings initial, int rootNote, std::function<void(PerformanceSettings)> accepted, ScaleSettings scaleAtOpen = {})
+        : root(rootNote), scale(scaleAtOpen), apply(std::move(accepted)) {
         setLookAndFeel(&theme);
         heading.setText("CHORD BANK  /  four momentary pads",juce::dontSendNotification);
         columns.setText("NAME",juce::dontSendNotification);
         offsetHeading.setText("OFFSETS (semitones)",juce::dontSendNotification);
         inversionHeading.setText("INVERSION",juce::dontSendNotification);
         octaveHeading.setText("OCTAVE",juce::dontSendNotification);
-        hint.setText("Offsets: 1-4 increasing values, -24 to 24. Preview before transpose. Enable HARMONY.",juce::dontSendNotification);
+        hint.setText("Offsets: 1-4 increasing values, -24 to 24. Preview uses scale at opening; before transpose.",juce::dontSendNotification);
         for (auto* item : {&heading,&columns,&offsetHeading,&inversionHeading,&octaveHeading,&hint,&message}) { label(*item,true); addAndMakeVisible(item); }
         for (std::size_t i=0;i<4;++i) {
             auto& row=rows[i];
@@ -123,7 +123,14 @@ private:
         for (std::size_t i=0;i<4;++i) {
             std::array<int,4> notes; juce::StringArray labels;
             if (valid && ChordPads::voicing(settings.pads[i],root,notes)) {
-                for (int note : notes) if (note>=0) labels.add(juce::String(noteLabel(note)));
+                for (int note : notes) if (note>=0) {
+                    const int mapped=scale.map(note,source::firstPad+static_cast<int>(i));
+                    if (mapped<0) labels.add(juce::String(noteLabel(note))+" filtered");
+                    else {
+                        const auto name=juce::String(noteLabel(mapped));
+                        if (labels.contains(name)) labels.add("merged"); else labels.add(name);
+                    }
+                }
                 rows[i].preview.setText(labels.joinIntoString("   /   "),juce::dontSendNotification);
             } else rows[i].preview.setText(valid ? "Outside MIDI range at this root - pad will stay silent." : "Check chord values.",juce::dontSendNotification);
         }
@@ -156,12 +163,13 @@ private:
     juce::Label heading,columns,offsetHeading,inversionHeading,octaveHeading,hint,message;
     juce::TextButton load,save,reset,commit,templates;
     int root;
+    ScaleSettings scale;
     std::function<void(PerformanceSettings)> apply;
     std::unique_ptr<juce::FileChooser> chooser;
 };
-inline juce::DialogWindow* openChordBank(PerformanceSettings settings,int root,std::function<void(PerformanceSettings)> apply) {
+inline juce::DialogWindow* openChordBank(PerformanceSettings settings,int root,std::function<void(PerformanceSettings)> apply, ScaleSettings scale = {}) {
     juce::DialogWindow::LaunchOptions options;
-    options.content.setOwned(new ChordBankEditor(settings,root,std::move(apply)));
+    options.content.setOwned(new ChordBankEditor(settings,root,std::move(apply),scale));
     options.dialogTitle="E-4 Chord Bank"; options.dialogBackgroundColour=background;
     options.useNativeTitleBar=true; options.resizable=false; return options.launchAsync();
 }

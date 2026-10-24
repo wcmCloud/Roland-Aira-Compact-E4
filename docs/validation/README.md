@@ -27,3 +27,7 @@ This test opened no audio or MIDI device and transmitted no hardware messages. I
 All seven CTest checks pass after moving standalone device writes onto one worker. The new portable sender suite covers queued delivery, channel/pitch-aware cleanup, priority Panic, shutdown cancellation, output overflow, clock deadline faults, UI heartbeat loss and 20,000 events crossing separate producer/consumer threads. It also passes AddressSanitizer/UndefinedBehaviorSanitizer and a separate ThreadSanitizer run on this Mac.
 
 These checks use fake output endpoints. They establish software ordering and failure handling, not physical USB/DIN timing or driver hotplug behaviour.
+
+## Scale feature validation
+
+The scale milestone passes all seven CTest checks and the core suite under AddressSanitizer/UndefinedBehaviorSanitizer. Exhaustive key/scale/mode tests use an independent degree-list oracle across MIDI 0–127. Ownership regressions cover collision releases, repeated/channel holds, pad opt-in, scale changes and transpose order. The actual VST3 wrapper passes 28 checks, including scale automation, mapped note/release sample offsets, reject mode and state recall; see [the scale wrapper report](vst3-scales-2026-10-24.json). No hardware MIDI output or audio device was opened by these checks; Live and physical E-4 acceptance remain open.

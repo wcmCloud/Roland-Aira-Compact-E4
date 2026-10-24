@@ -45,6 +45,7 @@ public:
     }
     void panic() { engine.panic(emitter()); }
     void setChannel(int channel) { engine.setChannel(channel, emitter()); }
+    void setScale(ScaleSettings settings) { engine.setScale(settings,emitter()); }
     void setTranspose(int semitones) { engine.setTranspose(semitones,emitter()); }
     void process(MidiEvent event, int source = 0) {
         if (sink != nullptr) engine.process(event.status, event.first, event.second, emitter(), source);

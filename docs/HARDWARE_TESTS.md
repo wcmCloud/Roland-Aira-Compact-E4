@@ -69,3 +69,11 @@ Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passe
 3. Save a .e4bank file, change edits, load it, confirm loading alone leaves active pads unchanged, then Apply. Check cancel and invalid-file preservation. Close/reopen standalone: the applied bank should return with ports disconnected.
 4. In Live, save a project with an edited bank, remove access to the exported file, then reopen. Verify names, voicings and no automatic note replay. Automate Pad 1 inversion/octave while held; verify old notes release and a fresh press uses the new voicing.
 5. Confirm an out-of-range chord produces no partial voicing. Test overlapping pads, root/transpose changes, Panic, editor close, bypass and disconnect. Verify old projects restore factory pads.
+
+## Key/scale acceptance
+
+1. Choose C / Major / Nearest; play C4 and C#4 together. Monitor one C4 output; releasing either first must preserve the other, including repeated holds and different input channels. Raw highlights should remain on the input keys.
+2. Choose Reject; C#4 should produce no Note On, while C4 still plays. Test pitch bend separately: it must still work. Include pads, play Minor, and confirm the minor third is filtered; disable pad inclusion to restore the full pad.
+3. Change key/mode/type/pad inclusion with held notes; all old output notes must release without replay. Check Panic, editor close, bypass, port changes and reconnect for stranded notes.
+4. Check boundary notes 0/127, nearest ties, and scale then transpose ordering. Save/reopen standalone and a Live project; verify scale recall. Open an older project: scale processing must default Off.
+5. In Live, automate scale mode/key/type/inclusion and record MIDI plus E-4 audio. Confirm timing and release behaviour. Reopen the chord-bank editor after scale changes to refresh its preview snapshot.

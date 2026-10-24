@@ -7,6 +7,7 @@
 #include "SettingsExchange.h"
 #include <thread>
 #include <array>
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -360,6 +361,65 @@ int main() {
     writer.join();
     exchange.consume(snapshot,revision);
     check(snapshot.pads[0].octave==2,"consumer eventually observes final published bank");
+    // Independent degree-list oracle: test all keys/scales/modes across MIDI boundaries.
+    const std::array<std::vector<int>,5> degrees {{{0,1,2,3,4,5,6,7,8,9,10,11},{0,2,4,5,7,9,11},{0,2,3,5,7,8,10},{0,2,4,7,9},{0,3,5,7,10}}};
+    for (int type=0;type<5;++type) for (int tonic=0;tonic<12;++tonic) for (int mode=0;mode<3;++mode) {
+        e4::ScaleSettings scale {mode,tonic,type,false};
+        for (int note=0;note<128;++note) {
+            const auto member=[&](int pitch) {
+                const int degree=(pitch-tonic+12)%12;
+                const auto& list=degrees[static_cast<std::size_t>(type)];
+                return std::find(list.begin(),list.end(),degree)!=list.end();
+            };
+            int expected=note;
+            if (mode!=0 && !member(note)) {
+                expected=-1;
+                if (mode==2) {
+                    int distance=129;
+                    for (int pitch=0;pitch<128;++pitch) if (member(pitch) && std::abs(pitch-note)<distance) { expected=pitch; distance=std::abs(pitch-note); }
+                }
+            }
+            check(scale.map(note)==expected,"exhaustive scale result matches independent nearest-note oracle");
+            check(scale.map(note,e4::source::firstPad)==note,"pads bypass scale by default");
+            scale.pads=true;
+            check(scale.map(note,e4::source::firstPad)==expected,"pad opt-in matches direct scale result");
+            scale.pads=false;
+        }
+    }
+    e4::MidiEngine scaleEngine;
+    e4::ScaleSettings cMajor {e4::ScaleSettings::nearest,0,e4::ScaleSettings::major,false};
+    scaleEngine.setScale(cMajor,emit); events.clear();
+    scaleEngine.process(0x90,60,100,emit); scaleEngine.process(0x90,61,100,emit);
+    scaleEngine.process(0x91,61,100,emit); scaleEngine.process(0x90,61,100,emit);
+    check(events==std::vector<Event>{{0x92,60,100}} && scaleEngine.activeVoices()==1,"nearest collisions merge original-note/channel/repeated ownership");
+    scaleEngine.process(0x80,60,0,emit); scaleEngine.process(0x80,61,0,emit); scaleEngine.process(0x81,61,0,emit);
+    check(events.size()==1,"collided releases cannot cut a remaining repeated hold");
+    scaleEngine.process(0x90,61,0,emit);
+    check(events.back()==Event{0x82,60,0} && scaleEngine.activeVoices()==0,"last collision owner sends original output release");
+    scaleEngine.process(0x90,61,100,emit); scaleEngine.process(0x90,60,100,emit,1);
+    events.clear(); scaleEngine.releaseSource(1,emit);
+    check(events.empty() && scaleEngine.activeVoices()==1,"UI cleanup preserves quantised external owner");
+    cMajor.tonic=2; scaleEngine.setScale(cMajor,emit);
+    check(events==std::vector<Event>{{0x82,60,0},{0xe2,0,64}} && scaleEngine.activeVoices()==0,"scale change releases old mapped pitch before changing key");
+    events.clear(); scaleEngine.process(0x80,61,0,emit);
+    check(events.empty(),"stale release after scale cleanup is harmless");
+    auto invalidScale=cMajor; invalidScale.tonic=12; scaleEngine.setScale(invalidScale,emit);
+    check(scaleEngine.scaleSettings()==cMajor,"invalid scale settings ignored");
+    cMajor.tonic=0; cMajor.mode=e4::ScaleSettings::reject; scaleEngine.setScale(cMajor,emit); events.clear();
+    scaleEngine.process(0x90,61,100,emit); scaleEngine.process(0x80,61,0,emit);
+    check(events.empty() && scaleEngine.lastRejection()==e4::MidiEngine::Rejection::outsideScale,"reject mode reports scale rejection without note output");
+    scaleEngine.process(0xe0,127,127,emit);
+    check(events==std::vector<Event>{{0xe2,127,127}},"pitch bend bypasses scale filtering");
+    cMajor.mode=e4::ScaleSettings::nearest; cMajor.pads=true; scaleEngine.setScale(cMajor,emit);
+    scaleEngine.setTranspose(1,emit); events.clear();
+    scaleEngine.process(0x90,61,100,emit); scaleEngine.process(0x80,61,0,emit);
+    check(events==std::vector<Event>{{0x92,61,100},{0x82,61,0}},"scale precedes transpose, including note release");
+    for (int note=0;note<128;++note) {
+        events.clear(); scaleEngine.process(0x90,note,100,emit,e4::source::firstPad);
+        scaleEngine.releaseSource(e4::source::firstPad,emit);
+        check(scaleEngine.activeVoices()==0,"scale/transposed source cleanup covers full MIDI range");
+        for (const auto& event : events) check(event[1]>=0 && event[1]<=127,"scale pipeline never emits invalid MIDI pitches");
+    }
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

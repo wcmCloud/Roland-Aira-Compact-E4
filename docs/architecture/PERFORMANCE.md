@@ -17,8 +17,8 @@ C++ structs. Decode validates the entire candidate before assigning it; wrong
 size, magic, future version, malformed names, duplicate/unordered offsets and
 invalid numeric values fail without changing the destination. Encode also
 leaves its destination intact on failure. This is a new app preset payload,
-embedded as Base64 in schema-4 plug-in state and exported as Base64 text in
-.e4bank files. Schemas 1–3 migrate to factory pads. Inversion/octave automation
+embedded as Base64 in schema-5 plug-in state and exported as Base64 text in
+.e4bank files. Schemas 1–3 migrate to factory pads; schemas 1–4 default scale processing to Off. Inversion/octave automation
 parameters override corresponding embedded values at runtime. The payload does
 not contain held notes or connection state. Standalone persists the active bank
 on normal exit; loading a file only stages edits until Apply.
@@ -69,3 +69,27 @@ preservation, 5,000 concurrent bank publications, actual text-file round-trip,
 embedded host state, schema migration, automation and overlapping-owner cleanup.
 Native component previews include the bank editor. OS file-picker interaction
 and actual Live/hardware playback remain separate manual acceptance tasks.
+
+## Scale transform (P2)
+
+ScaleSettings is a bounded value with mode, tonic, type and pad inclusion.
+MidiEngine maps original input pitches before transpose, retaining ownership
+under the original source/channel/note index and reference-counting the mapped
+output. Releases and releaseSource use the same deterministic mapping. setScale
+panics before changing it, so no accepted hold can acquire a different mapping.
+Reject-mode notes never gain ownership; fifth-voice rejected holds retain the
+existing original-input rejection accounting. Quantisation collisions can share
+a physical voice without sharing release ownership.
+
+Direct input and screen keys are included; pads are opt-in. Reserved generator
+sources currently bypass this stage. P3 must explicitly transform the arp input
+pool, and P4 must define sequence inclusion, rather than double-transforming
+generated notes. Pitch bend bypasses note mapping. Nearest searches bounded
+MIDI pitches with a lower-note tie break. A distinct outsideScale rejection
+reason feeds UI feedback. Scale changes clear queued UI performance and pad
+snapshots along with engine ownership; no held-note replay is attempted.
+
+Scale parameters are host-automatable and stored in schema 5, separate from
+chord-only bank files. Standalone restores them with devices disconnected.
+Raw input highlights remain before scale/transpose. Chord previews use an
+explicit scale snapshot captured on opening, before global transpose.

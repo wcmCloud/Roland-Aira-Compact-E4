@@ -112,7 +112,9 @@ public:
         const bool newRejection = serial != seen;
         if (newRejection) {
             seen = serial; last = reason; until = now+2000;
-            setTooltip(reason == e4::MidiEngine::Rejection::outOfRange
+            setTooltip(reason == e4::MidiEngine::Rejection::outsideScale
+                ? "Note rejected: outside the selected MIDI scale."
+                : reason == e4::MidiEngine::Rejection::outOfRange
                 ? "This transposed note is outside MIDI 0-127. Change the note or transpose."
                 : "Four-voice limit reached. Fully release rejected keys before trying that pitch again.");
         }
@@ -128,6 +130,7 @@ public:
         }
         g.setColour(warning ? danger : muted); g.setFont(font(10,true));
         const auto message = !warning ? "VOICES" : last == e4::MidiEngine::Rejection::outOfRange ? "OUT OF RANGE"
+            : last == e4::MidiEngine::Rejection::outsideScale ? "OUT OF SCALE"
             : last == e4::MidiEngine::Rejection::counterOverflow ? "INPUT RESET" : "VOICE LIMIT";
         g.drawFittedText(message,56,0,juce::jmax(0,getWidth()-98),getHeight(),juce::Justification::centredLeft,1);
         g.setColour(text); g.setFont(font(13,true));
@@ -180,7 +183,7 @@ inline void card(juce::Graphics& g,juce::Rectangle<float> bounds,const juce::Str
 inline void surface(juce::Graphics& g,int width,int height,bool standalone,bool connected) {
     const juce::Graphics::ScopedSaveState save(g);
     const float designWidth = standalone ? 1040.0f : 960.0f;
-    const float designHeight = standalone ? 780.0f : 650.0f;
+    const float designHeight = standalone ? 850.0f : 720.0f;
     g.addTransform(juce::AffineTransform::scale(static_cast<float>(width)/designWidth,static_cast<float>(height)/designHeight));
     g.fillAll(background);
     g.setGradientFill(juce::ColourGradient(juce::Colour(0xff25312a),0,0,background,designWidth*0.65f,200,false));
@@ -194,19 +197,19 @@ inline void surface(juce::Graphics& g,int width,int height,bool standalone,bool 
     if (standalone) {
         card(g,{24,100,270,262},"01 / MIDI ROUTING");
         card(g,{24,376,270,294},"02 / CLOCK & TRANSPORT");
-        card(g,{310,100,706,230},"PERFORMANCE");
-        card(g,{310,344,706,152},"CHORD PALETTE");
-        card(g,{310,510,706,160},"KEYBOARD");
-        card(g,{24,684,992,72},"");
+        card(g,{310,100,706,300},"PERFORMANCE");
+        card(g,{310,414,706,152},"CHORD PALETTE");
+        card(g,{310,580,706,160},"KEYBOARD");
+        card(g,{24,754,992,72},"");
     } else {
-        card(g,{24,100,912,210},"PERFORMANCE");
-        card(g,{24,324,912,144},"CHORD PALETTE");
-        card(g,{24,482,912,128},"KEYBOARD");
-        g.setColour(muted); g.setFont(font(11)); g.drawText("MIDI TO YOUR HARDWARE. AUDIO FROM YOUR E-4.",24,621,912,16,juce::Justification::left);
+        card(g,{24,100,912,280},"PERFORMANCE");
+        card(g,{24,394,912,144},"CHORD PALETTE");
+        card(g,{24,552,912,128},"KEYBOARD");
+        g.setColour(muted); g.setFont(font(11)); g.drawText("MIDI TO YOUR HARDWARE. AUDIO FROM YOUR E-4.",24,691,912,16,juce::Justification::left);
     }
 }
 inline juce::Rectangle<int> bounds(int x,int y,int width,int height,int actualWidth,int actualHeight,bool standalone) {
     return juce::Rectangle<float>(static_cast<float>(x),static_cast<float>(y),static_cast<float>(width),static_cast<float>(height))
-        .transformedBy(juce::AffineTransform::scale(static_cast<float>(actualWidth)/(standalone ? 1040.0f : 960.0f),static_cast<float>(actualHeight)/(standalone ? 780.0f : 650.0f))).toNearestInt();
+        .transformedBy(juce::AffineTransform::scale(static_cast<float>(actualWidth)/(standalone ? 1040.0f : 960.0f),static_cast<float>(actualHeight)/(standalone ? 850.0f : 720.0f))).toNearestInt();
 }
 }

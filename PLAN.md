@@ -1,6 +1,15 @@
 # E-4 Companion — implementation plan
 
 
+### Performance expansion: P2 key/scale tools (24 October 2026)
+
+- Added shared MIDI scale transform with Off/Reject/Nearest, twelve tonics, Chromatic/Major/Natural minor/Major pentatonic/Minor pentatonic, lower-note nearest ties and optional pad inclusion. Both interfaces expose the same controls.
+- Ownership stays indexed by original input note/channel/source while physical references use the scaled/transposed output pitch. Mapping settings remain constant for each hold; changing any scale setting explicitly releases old mappings before replacing settings. Pitch bend and raw input highlights are unaffected by note quantisation.
+- Chord-bank previews include scale processing captured at editor opening and identify filtered/merged notes. Scale precedes global transpose; .e4bank remains a chord-only format. Standalone remembers scale settings; schema-5 plug-in state embeds/automates them and migrates schemas 1–4 with processing Off.
+- Added exhaustive independent-oracle checks for every scale/key/mode across MIDI 0–127, collision/repeat/channel ownership, source cleanup, transpose order, rejection feedback, automation, invalid state and migration. Actual VST3 wrapper tests now cover scale parameter exposure, note/release timing, rejection and state recall.
+- All seven CTest checks and core ASan/UBSan pass; Debug standalone/AU/VST3 rebuilt and native previews visually reviewed. Physical E-4, Live automation/routing and interactive acceptance remain open. P3 arpeggiator/scheduler is next.
+
+
 ### Performance expansion: P1 chord banks (24 October 2026)
 
 - Added shared bank editor in standalone and VST3/AU: editable pad names/intervals, templates, inversions, octave placement, note previews, validated save/load and explicit Apply. Bank filenames provide the bank name.

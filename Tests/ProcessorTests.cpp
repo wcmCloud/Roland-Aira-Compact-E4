@@ -268,6 +268,44 @@ int main() {
     check(bankFile.replaceWithText(e4::ui::bankText(bank)) && e4::ui::parseBank(bankFile.loadFileAsString().trim(),snapshotBankForTest)
         && snapshotBankForTest.pads[0].inversion==bank.pads[0].inversion,"bank file save/load round-trip");
     bankFile.deleteFile();
+    E4Processor scaledProcessor;
+    scaledProcessor.prepareToPlay(48000,128); midi.clear(); scaledProcessor.processBlock(audio,midi);
+    auto setScaleParameter=[&](const char* id,float value) {
+        auto* parameter=scaledProcessor.parameters.getParameter(id);
+        parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+    };
+    setScaleParameter("scaleMode",2);
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,61,static_cast<juce::uint8>(100)),17);
+    scaledProcessor.processBlock(audio,midi);
+    bool snapped=false;
+    for (const auto event : midi) if (event.getMessage().isNoteOn()) snapped=event.getMessage().getNoteNumber()==60 && event.samplePosition==17;
+    check(snapped && (scaledProcessor.incomingNotes()[0] & (std::uint64_t{1}<<61))!=0,"scale transforms output with original timestamp and input highlight");
+    setScaleParameter("scaleTonic",2); midi.clear(); scaledProcessor.processBlock(audio,midi);
+    bool released60=false;
+    for (const auto event : midi) released60=released60 || (event.getMessage().isNoteOff() && event.getMessage().getNoteNumber()==60);
+    check(released60 && scaledProcessor.activeVoices()==0,"host scale automation cleans old output");
+    setScaleParameter("scaleTonic",0); setScaleParameter("scaleMode",1);
+    midi.clear(); scaledProcessor.processBlock(audio,midi);
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,61,static_cast<juce::uint8>(100)),9); scaledProcessor.processBlock(audio,midi);
+    check(midi.isEmpty() && scaledProcessor.lastRejection()==e4::MidiEngine::Rejection::outsideScale,"processor reject mode filters non-scale notes");
+    auto minorBank=scaledProcessor.chordBank(); minorBank.pads[0]=minorBank.pads[1]; scaledProcessor.setChordBank(minorBank);
+    setScaleParameter("scalePads",1); midi.clear(); scaledProcessor.processBlock(audio,midi);
+    scaledProcessor.postPerformance({e4::PerformanceCommand::padDown,0,100}); midi.clear(); scaledProcessor.processBlock(audio,midi);
+    check(scaledProcessor.activeVoices()==2,"pad opt-in rejects minor third outside C major");
+    juce::MemoryBlock scaleState; scaledProcessor.getStateInformation(scaleState);
+    E4Processor scaleRestored; scaleRestored.setStateInformation(scaleState.getData(),static_cast<int>(scaleState.getSize()));
+    check(scaleRestored.scaleSettings()==scaledProcessor.scaleSettings(),"scale settings round-trip with host project");
+    auto oldScaleState=scaledProcessor.parameters.copyState(); oldScaleState.setProperty("schema",4,nullptr);
+    oldScaleState.setProperty("chordBank",e4::ui::bankText(minorBank),nullptr);
+    if (auto xml=oldScaleState.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,scaleState);
+    scaleRestored.setStateInformation(scaleState.getData(),static_cast<int>(scaleState.getSize()));
+    check(scaleRestored.scaleSettings()==e4::ScaleSettings{},"schema 4 migrates with scale processing off");
+    auto badScaleState=scaledProcessor.parameters.copyState(); badScaleState.setProperty("schema",5,nullptr);
+    badScaleState.setProperty("chordBank",e4::ui::bankText(minorBank),nullptr);
+    badScaleState.getChildWithProperty("id","scaleTonic").setProperty("value",12,nullptr);
+    if (auto xml=badScaleState.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,scaleState);
+    scaleRestored.setStateInformation(scaleState.getData(),static_cast<int>(scaleState.getSize()));
+    check(scaleRestored.scaleSettings()==e4::ScaleSettings{},"invalid scale state rejected without changing current settings");
     std::cout << "Processor integration: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

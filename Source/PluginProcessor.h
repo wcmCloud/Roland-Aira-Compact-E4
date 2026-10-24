@@ -21,6 +21,7 @@ public:
     std::uint32_t rejectionCount() const noexcept { return rejectedCount.load(); }
     e4::MidiEngine::Rejection lastRejection() const noexcept { return static_cast<e4::MidiEngine::Rejection>(rejectedReason.load()); }
     std::array<std::uint64_t,2> incomingNotes() const noexcept { return {inputLow.load(),inputHigh.load()}; }
+    e4::ScaleSettings scaleSettings() const;
     e4::PerformanceSettings chordBank() const;
     bool setChordBank(const e4::PerformanceSettings& bank);
     juce::AudioProcessorValueTreeState parameters;

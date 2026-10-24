@@ -6,6 +6,7 @@
 #include "PerformanceKeyboard.h"
 #include "InputNoteState.h"
 #include "ChordBankEditor.h"
+#include "ScaleControls.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
@@ -172,7 +173,7 @@ public:
                 safe->releasePads();
                 safe->chords.replace(bank,[safe](e4::MidiEvent event,int source) { if (safe) safe->session.process(event,source); });
                 safe->updatePadNames();
-            });
+            },scaleControls.settings());
         };
         addAndMakeVisible(bankButton);
         addAndMakeVisible(rootLabel); addAndMakeVisible(root);
@@ -201,13 +202,24 @@ public:
         connect.setEnabled(selectedIdentifier(outputs,outputDevices).isNotEmpty());
         disconnect.setEnabled(false);
         if (!previewMode) startTimer(5);
-        setSize(1040,780);
+        e4::ScaleSettings savedScale {settings->getIntValue("scaleMode",0),settings->getIntValue("scaleTonic",0),settings->getIntValue("scaleType",1),settings->getBoolValue("scalePads",false)};
+        if (!savedScale.valid()) savedScale={};
+        scaleControls.setSettings(savedScale); session.setScale(savedScale);
+        scaleControls.onChange=[this] {
+            resetKeyboard(); clearPending(); session.setScale(scaleControls.settings());
+            bend.setValue(8192,juce::dontSendNotification);
+        };
+        addAndMakeVisible(scaleControls);
+        setSize(1040,850);
     }
     ~Companion() override {
         if (bankWindow) delete bankWindow.getComponent();
         stopTimer();
         if (previewMode) { keys.removeListener(this); setLookAndFeel(nullptr); return; }
         auto* settings = preferences.getUserSettings();
+        const auto savedScale=scaleControls.settings();
+        settings->setValue("scaleMode",savedScale.mode); settings->setValue("scaleTonic",savedScale.tonic);
+        settings->setValue("scaleType",savedScale.type); settings->setValue("scalePads",savedScale.pads);
         settings->setValue("chordBank",e4::ui::bankText(chords.getSettings()));
         settings->setValue("channel",static_cast<int>(channel.getValue()));
         settings->setValue("chordRoot",static_cast<int>(root.getValue()));
@@ -235,12 +247,13 @@ public:
         place(channelLabel,334,187,160,18); place(channel,334,211,160,36);
         place(rootLabel,514,187,160,18); place(root,514,211,160,36);
         place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
+        place(scaleControls,334,326,658,52);
         place(bendLabel,334,278,90,20); place(bend,432,267,560,40);
-        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,398,154,78);
-        place(bankButton,732,355,260,28);
-        voices.setBounds(0,0,0,0); place(voiceDisplay,768,527,224,22); place(keyboard,334,564,658,86);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,468,154,78);
+        place(bankButton,732,425,260,28);
+        voices.setBounds(0,0,0,0); place(voiceDisplay,768,597,224,22); place(keyboard,334,634,658,86);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
-        place(status,44,701,952,38);
+        place(status,44,771,952,38);
     }
 
 private:
@@ -418,6 +431,7 @@ private:
     juce::Label title,help,inputLabel,outputLabel,channelLabel,bendLabel,status,voices;
     juce::ComboBox inputs,outputs;
     juce::Slider channel,bend,root,transpose,tempo;
+    e4::ui::ScaleControls scaleControls;
     juce::ToggleButton clockEnable;
     juce::TextButton start,stop;
     juce::Label clockState;
@@ -438,7 +452,7 @@ public:
         setUsingNativeTitleBar(true);
         setContentOwned(new Companion(),true);
         setResizable(true,false);
-        setResizeLimits(1040,780,1440,1080);
+        setResizeLimits(1040,850,1440,1180);
         centreWithSize(getWidth(),getHeight());
         setVisible(true);
     }

@@ -1,6 +1,7 @@
 #pragma once
 #include "MidiPolicy.h"
 #include "PerformanceSettings.h"
+#include "ScaleSettings.h"
 #include <array>
 #include <cstdint>
 
@@ -8,7 +9,7 @@ namespace e4 {
 // Audio-thread owned. The caller supplies a bounded, non-allocating event sink.
 class MidiEngine {
 public:
-    enum class Rejection { none, voiceLimit, outOfRange, counterOverflow };
+    enum class Rejection { none, voiceLimit, outOfRange, counterOverflow, outsideScale };
     template <typename Emit> void panic(Emit&& emit) noexcept {
         for (int note = 0; note < 128; ++note)
             if (voices[static_cast<std::size_t>(note)] != 0)
@@ -29,13 +30,24 @@ public:
         panic(emit); // Releases use the pitches that were actually sent.
         transpose = next;
     }
+    const ScaleSettings& scaleSettings() const noexcept { return scale; }
+    template <typename Emit> void setScale(ScaleSettings next, Emit&& emit) noexcept {
+        if (!next.valid() || next==scale) return;
+        panic(emit); // Old mappings must be released before the new scale takes effect.
+        scale=next;
+    }
     template <typename Emit> void process(int status, int data1, int data2, Emit&& emit, int source = 0) noexcept {
         if (status < 0x80 || status > 0xef || data1 < 0 || data1 > 127
             || data2 < 0 || data2 > 127 || source < 0 || source >= e4::source::count) return;
         const int kind = status & 0xf0;
         if (kind == 0xe0) { emit(0xe0 | (channel - 1), data1, data2); return; }
         if (kind != 0x80 && kind != 0x90) return;
-        const int outputNote = data1 + transpose;
+        const int scaled=scale.map(data1,source);
+        if (scaled<0) {
+            if (kind==0x90 && data2!=0) reject(Rejection::outsideScale);
+            return;
+        }
+        const int outputNote = scaled + transpose;
         if (outputNote < 0 || outputNote > 127) {
             if (kind == 0x90 && data2 != 0) reject(Rejection::outOfRange);
             return;
@@ -69,7 +81,7 @@ public:
                 auto& owner = held[static_cast<std::size_t>(source * 16 + inputChannel)][static_cast<std::size_t>(note)];
                 rejected[static_cast<std::size_t>(source * 16 + inputChannel)][static_cast<std::size_t>(note)] = 0;
                 if (owner == 0) continue;
-                const int outputNote = note + transpose; // Only in-range input notes can be owned.
+                const int outputNote = scale.map(note,source) + transpose; // Only in-range input notes can be owned.
                 auto& references = voices[static_cast<std::size_t>(outputNote)];
                 references -= owner;
                 owner = 0;
@@ -91,5 +103,6 @@ private:
     int channel = defaultChannel;
     int active = 0;
     int transpose = 0;
+    ScaleSettings scale;
 };
 }

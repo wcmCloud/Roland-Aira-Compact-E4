@@ -2,6 +2,7 @@
 #include "StudioTheme.h"
 #include "PerformanceKeyboard.h"
 #include "ChordBankEditor.h"
+#include "ScaleControls.h"
 
 namespace {
 class E4Editor final : public juce::AudioProcessorEditor, private juce::Timer,
@@ -52,7 +53,7 @@ public:
             auto safe=juce::Component::SafePointer<E4Editor>(this);
             bankWindow=e4::ui::openChordBank(owner.chordBank(),static_cast<int>(root.getValue()),[safe](e4::PerformanceSettings bank) {
                 if (safe) safe->owner.setChordBank(bank);
-            });
+            },owner.scaleSettings());
         };
         addAndMakeVisible(bankButton);
         updatePadNames();
@@ -62,7 +63,12 @@ public:
         const auto incoming = owner.incomingNotes(); keyboard.showIncoming(incoming[0],incoming[1]);
         for (auto* c : std::array<juce::Component*,9>{&title,&info,&channel,&root,&transpose,&panic,&bend,&status,&keyboard})
             addAndMakeVisible(c);
-        setSize(960,650);
+        addAndMakeVisible(scaleControls);
+        modeAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(owner.parameters,"scaleMode",scaleControls.mode);
+        tonicAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(owner.parameters,"scaleTonic",scaleControls.tonic);
+        typeAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(owner.parameters,"scaleType",scaleControls.type);
+        padsAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(owner.parameters,"scalePads",scaleControls.pads);
+        setSize(960,720);
         startTimerHz(20);
     }
     ~E4Editor() override {
@@ -78,9 +84,10 @@ public:
         place(rootLabel,286,179,220,18); place(root,286,202,220,36);
         place(transposeLabel,528,179,220,18); place(transpose,528,202,220,36);
         place(bendLabel,44,265,100,22); place(bend,156,255,760,38);
-        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,370,209,78);
-        place(bankButton,656,334,260,28);
-        status.setBounds(0,0,0,0); place(voiceDisplay,676,499,240,22); place(keyboard,44,534,872,58);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,440,209,78);
+        place(bankButton,656,404,260,28);
+        status.setBounds(0,0,0,0); place(voiceDisplay,676,569,240,22); place(keyboard,44,604,872,58);
+        place(scaleControls,44,318,872,52);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
     }
 
@@ -113,6 +120,9 @@ private:
     juce::TooltipWindow tooltips {this,600};
     juce::Label title,info,status,channelLabel,rootLabel,transposeLabel,bendLabel;
     juce::Slider channel,root,bend,transpose;
+    e4::ui::ScaleControls scaleControls;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment,tonicAttachment,typeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> padsAttachment;
     juce::TextButton panic,bankButton;
     juce::Component::SafePointer<juce::DialogWindow> bankWindow;
     std::array<juce::TextButton,4> pads;
@@ -132,8 +142,18 @@ E4Processor::E4Processor()
           std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad2Inversion", 1}, "Pad 3 inversion", 0, 3, 0),
           std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad2Octave", 1}, "Pad 3 octave", -2, 2, 0),
           std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad3Inversion", 1}, "Pad 4 inversion", 0, 3, 0),
-          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad3Octave", 1}, "Pad 4 octave", -2, 2, 0)
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"pad3Octave", 1}, "Pad 4 octave", -2, 2, 0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"scaleMode",1},"Scale mode",0,2,0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"scaleTonic",1},"Scale tonic",0,11,0),
+          std::make_unique<juce::AudioParameterInt>(juce::ParameterID{"scaleType",1},"Scale type",0,4,1),
+          std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"scalePads",1},"Scale includes pads",false)
       }) {}
+e4::ScaleSettings E4Processor::scaleSettings() const {
+    return {static_cast<int>(parameters.getRawParameterValue("scaleMode")->load()),
+            static_cast<int>(parameters.getRawParameterValue("scaleTonic")->load()),
+            static_cast<int>(parameters.getRawParameterValue("scaleType")->load()),
+            parameters.getRawParameterValue("scalePads")->load()>=0.5f};
+}
 e4::PerformanceSettings E4Processor::chordBank() const {
     auto bank=bankExchange.get();
     for (int i=0;i<4;++i) {
@@ -193,21 +213,24 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
     const bool channelChanged = nextChannel != engine.outputChannel();
     const int nextTranspose = static_cast<int>(parameters.getRawParameterValue("transpose")->load());
     const bool transposeChanged = nextTranspose != engine.semitoneOffset();
+    const auto nextScale=scaleSettings();
+    const bool scaleChanged=nextScale!=engine.scaleSettings();
     const bool queueFailed = performance.consumeOverflow();
-    const bool panic = panicRequested.exchange(false) || channelChanged || transposeChanged || queueFailed;
+    const bool panic = panicRequested.exchange(false) || channelChanged || transposeChanged || scaleChanged || queueFailed;
     const bool releaseUi = uiReleaseRequested.exchange(false);
     if (panic || releaseUi) {
         performance.discard();
         chords.releaseAll(send);
         if (panic) {
             inputNotes.clear();
-            if (!channelChanged && !transposeChanged) engine.panic(emit);
+            if (!channelChanged && !transposeChanged && !scaleChanged) engine.panic(emit);
         }
         else {
             for (int source = 1; source < e4::source::arpeggiator; ++source) engine.releaseSource(source,emit);
             emit(0xe0 | (engine.outputChannel()-1),0,64);
         }
     }
+    engine.setScale(nextScale,emit);
     engine.setChannel(nextChannel,emit);
     engine.setTranspose(nextTranspose,emit);
     const int root = static_cast<int>(parameters.getRawParameterValue("chordRoot")->load());
@@ -270,7 +293,7 @@ void E4Processor::processBlockBypassed(juce::AudioBuffer<float>& audio, juce::Mi
 juce::AudioProcessorEditor* E4Processor::createEditor() { return new E4Editor(*this); }
 void E4Processor::getStateInformation(juce::MemoryBlock& dest) {
     auto state = parameters.copyState();
-    state.setProperty("schema", 4, nullptr);
+    state.setProperty("schema", 5, nullptr);
     state.setProperty("chordBank",e4::ui::bankText(chordBank()),nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary(*xml, dest);
 }
@@ -278,7 +301,7 @@ void E4Processor::setStateInformation(const void* data, int size) {
     if (auto xml = getXmlFromBinary(data, size)) {
         auto state = juce::ValueTree::fromXml(*xml);
         const int schema = static_cast<int>(state.getProperty("schema"));
-        if (!state.hasType("E4State") || (schema != 1 && schema != 2 && schema != 3 && schema != 4)) return;
+        if (!state.hasType("E4State") || (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != 5)) return;
         const auto validParameter = [&state](const char* id,int minimum,int maximum) {
             auto node = state.getChildWithProperty("id",id);
             const double value = static_cast<double>(node.getProperty("value",-1));
@@ -304,8 +327,8 @@ void E4Processor::setStateInformation(const void* data, int size) {
         }
         if (!validParameter("transpose",-24,24)) return;
         e4::PerformanceSettings bank;
-        if (schema == 4 && !e4::ui::parseBank(state.getProperty("chordBank").toString(),bank)) return;
-        state.setProperty("schema",4,nullptr);
+        if (schema >= 4 && !e4::ui::parseBank(state.getProperty("chordBank").toString(),bank)) return;
+        state.setProperty("schema",5,nullptr);
         for (int i=0;i<4;++i) {
             for (const auto* suffix : {"Inversion","Octave"}) {
                 const auto id="pad"+juce::String(i)+suffix;
@@ -317,6 +340,16 @@ void E4Processor::setStateInformation(const void* data, int size) {
                 const bool isInversion=juce::String(suffix)=="Inversion";
                 if (!validParameter(id.toRawUTF8(),isInversion ? 0 : -2,isInversion ? 3 : 2)) return;
             }
+        }
+        constexpr const char* scaleIds[] = {"scaleMode","scaleTonic","scaleType","scalePads"};
+        constexpr int maximums[] = {2,11,4,1};
+        for (std::size_t i=0;i<4;++i) {
+            const auto id=scaleIds[i];
+            if (schema<5) {
+                auto old=state.getChildWithProperty("id",id); if (old.isValid()) state.removeChild(old,nullptr);
+                juce::ValueTree node("PARAM"); node.setProperty("id",id,nullptr); node.setProperty("value",i==2 ? 1 : 0,nullptr); state.addChild(node,-1,nullptr);
+            }
+            if (!validParameter(id,0,maximums[i])) return;
         }
         bankExchange.publish(bank);
         parameters.replaceState(state);
