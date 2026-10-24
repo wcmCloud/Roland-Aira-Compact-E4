@@ -49,3 +49,11 @@ The signed graphical E-4 Installer app installs chosen formats into the current 
 ## Licences and corresponding source
 
 Packaging includes LICENSE.md, MIT/GPL-3.0 texts and THIRD_PARTY_NOTICES.md plus dependency notices in Studio Test Kit/Licences. Studio Test Kit/Sources contains the project/build scripts and JUCE 8.0.10 source without Git history, generated build products, local signing configuration or the Roland reference manual. The pinned framework checkout is required when packaging; extracted source archives use the included JUCE folder. Linked binaries retain JUCE AGPL/commercial requirements; project source licensing does not override them.
+
+## GitHub cross-platform previews
+
+`.github/workflows/release.yml` builds and tests six native architectures. A matching version tag creates a draft prerelease only after every job succeeds. The release remains a draft until its notarised Mac DMG has been added locally and its contents reviewed.
+
+Windows and Linux use `scripts/package-portable.py`; each artifact includes standalone, VST3, the MIDI probe, studio fixtures, licences and corresponding source. Windows has a per-user PowerShell installation helper; Linux has a per-user shell installation helper. These packages are platform previews and do not imply completed hardware/host acceptance. Windows binaries are unsigned. Linux builds target Ubuntu 24.04 libraries. Linux has no Ableton Live version; test VST3 in a compatible native host.
+
+Mac CI archives include AU but are unsigned development artifacts. Build the distribution DMG locally with `CMAKE_OSX_ARCHITECTURES=arm64;x86_64` and the existing signing/notarisation process. `package-macos.py` detects a universal executable and names the output accordingly. Do not publish the unsigned `.pkg` as a signed installer.

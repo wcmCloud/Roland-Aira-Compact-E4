@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    paths-ignore: ['README.md', 'docs/**', 'packaging/README.md']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -38,7 +39,10 @@ jobs:
         if: runner.os == 'Windows'
         run: cmake -S . -B build-ci -A ${{ matrix.vs }} -DJUCE_SOURCE_DIR="$pwd/JUCE" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
       - name: Build
-        run: cmake --build build-ci --config Release --parallel 3
+        run: cmake --build build-ci --config Release --parallel 3 --target AiraE4_VST3 AiraE4_Standalone e4_core_tests e4_clock_tests e4_mapping_tests e4_output_tests e4_processor_tests e4_vst3_check e4_midi_probe
+      - name: Build macOS AU
+        if: runner.os == 'macOS'
+        run: cmake --build build-ci --config Release --parallel 3 --target AiraE4_AU
       - name: Tests Unix desktop and Windows
         if: runner.os != 'Linux'
         run: ctest --test-dir build-ci -C Release --output-on-failure
@@ -69,9 +73,15 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+      - name: Keep unsigned Mac archives in Actions only
+        run: find artifacts -name '*-macOS-*' -delete
       - name: Create draft prerelease
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" artifacts/* --draft --prerelease --title "E-4 Companion ${TAG#v}" --notes-file docs/RELEASE-NOTES.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" artifacts/* --clobber
+          else
+            gh release create "$TAG" artifacts/* --draft --prerelease --title "E-4 Companion ${TAG#v}" --notes-file docs/RELEASE-NOTES.md
+          fi

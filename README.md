@@ -7,7 +7,7 @@
 **Play your E-4 vocoder from a keyboard, chord pads or Ableton Live. Shape the notes on your computer; hear the voice and effects on the hardware.**
 
 [![Preview](https://img.shields.io/badge/preview-0.1.0-C3EF78?style=for-the-badge)](#getting-started)
-[![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-28323D?style=for-the-badge)](#platforms-and-formats)
+[![Platform](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-28323D?style=for-the-badge)](#platforms-and-formats)
 [![JUCE](https://img.shields.io/badge/JUCE-8.0.10-64DFCE?style=for-the-badge)](#build-from-source)
 [![Project licence](https://img.shields.io/badge/project%20licence-MIT%20or%20GPL--3.0-28323D?style=for-the-badge)](#licence)
 
@@ -73,7 +73,7 @@ Installer, standalone and settings images are captures of the running macOS wind
 
 ## Getting started
 
-The current **0.1.0 studio preview** has a signed, Apple-notarised **Apple Silicon DMG**. It is generated locally under `build-packages/0.1.0-arm64/`; it has not been published as a GitHub release. See [packaging instructions](packaging/README.md) to reproduce it. Published downloads, when available, will be on the [releases page](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases).
+The current **0.1.0 studio preview** has a signed, Apple-notarised **universal Mac DMG (Apple Silicon and Intel)**. It is generated locally under `build-packages/0.1.0-universal/`; it has not been published as a GitHub release. See [packaging instructions](packaging/README.md) to reproduce it. Published downloads, when available, will be on the [releases page](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases).
 
 1. Quit Live and other audio hosts. Open the DMG and launch **E-4 Installer**.
 2. Select VST3, Audio Unit and/or standalone. The graphical installer uses your user plug-in folders and `~/Applications`, preserving earlier copies in `~/Library/Application Support/E-4 Companion/Installer Backups`.
@@ -90,8 +90,8 @@ The DMG is the finished studio installation path. The separate system-wide `.pkg
 | macOS Apple Silicon standalone | Built, signed/notarised and installation-tested |
 | macOS Apple Silicon VST3 | Formal validation passed; Live routing/recall smoke tests passed |
 | macOS Apple Silicon AU | Apple AU validation passed; MIDI-output workflow remains experimental |
-| Intel Mac / universal | Not built or certified |
-| Windows / Linux VST3 and standalone | Native builds, installers and acceptance still needed |
+| Intel Mac / universal | Universal DMG signed/notarised; native Intel CI tests passed; studio acceptance pending |
+| Windows / Linux VST3 and standalone | Native x64/ARM64 CI tests and packaging passed; studio acceptance pending |
 
 The sources use JUCE/C++17 and select AU only on Apple platforms. Cross-platform source does not mean one installer works on every operating system. The current build declares macOS 11 minimum; running on that oldest version has not been verified.
 
@@ -142,6 +142,14 @@ The [release preflight record](docs/validation/studio-preflight-2026-10-24/READM
 
 Four-note hardware playback was confirmed by the user. Audible bend, physical-controller learn/CC delivery, held-note cleanup, clock/looper behaviour, hotplug/sleep, USB audio return and an actual clean-account/machine install remain open. A format validator is not a substitute for those tests. Use the [studio checklist](docs/studio/START-HERE.md) and [result sheet](docs/studio/RESULTS.md).
 
+## Cross-platform builds and releases
+
+[Native build results](https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/workflows/release.yml) cover macOS Apple Silicon/Intel, Windows x64/ARM64 and Linux x64/ARM64. A successful build verifies compilation and automated MIDI/processor/VST3 tests; physical hardware and DAW acceptance remain separate checks. AU is macOS-only. Choose the architecture matching your DAW.
+
+The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs are unsigned development builds; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
+
+To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft prerelease. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.
+
 ## Build from source
 
 Requires CMake 3.22+, a C++17 compiler and JUCE **8.0.10**. On macOS use Xcode/command-line tools. Generated icon assets are committed; .NET is needed only to regenerate artwork.
@@ -152,7 +160,7 @@ cmake --build build-check --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_co
 ctest --test-dir build-check --output-on-failure
 ```
 
-On non-Apple platforms omit `AiraE4_AU`; those targets have not been validated here. `-DE4_FETCH_JUCE=ON` can fetch the pinned JUCE version instead of `JUCE_SOURCE_DIR`. For Xcode generation, add `-G Xcode`, omit `CMAKE_BUILD_TYPE` and use `--config Debug` / `ctest -C Debug`. The verified automated builds here used Makefiles.
+On non-Apple platforms omit `AiraE4_AU`; native CI tests those builds, while DAW/hardware acceptance remains pending. `-DE4_FETCH_JUCE=ON` can fetch the pinned JUCE version instead of `JUCE_SOURCE_DIR`. For Xcode generation, add `-G Xcode`, omit `CMAKE_BUILD_TYPE` and use `--config Debug` / `ctest -C Debug`. The verified automated builds here used Makefiles.
 
 ```sh
 ./scripts/run-debug.sh              # Build and open the Debug standalone
@@ -164,7 +172,7 @@ On non-Apple platforms omit `AiraE4_AU`; those targets have not been validated h
 
 ## Contributing and issues
 
-Report the host/macOS version, E-4 firmware, MIDI/audio route, sample rate/buffer and exact reproduction steps. Say whether the issue occurs in standalone, Live or another host; attach a short MIDI/audio capture when relevant. Keep software simulations, host observations and physical hardware results separate. Contributions are accepted under the project licence choice below.
+Report the operating system and host version, E-4 firmware, MIDI/audio route, sample rate/buffer and exact reproduction steps. Say whether the issue occurs in standalone, Live or another host; attach a short MIDI/audio capture when relevant. Keep software simulations, host observations and physical hardware results separate. Contributions are accepted under the project licence choice below.
 
 ## Licence
 
@@ -180,11 +188,3 @@ SPDX: **`MIT OR GPL-3.0-only`**. Contributions use the same terms, matching the 
 **Dependency terms still apply.** JUCE 8 framework modules are AGPLv3/commercial, so linked apps/plug-ins are not MIT-only binaries. See [project licensing](LICENSE.md) and [third-party notices](THIRD_PARTY_NOTICES.md), including corresponding-source and distribution requirements. The studio package includes licence texts and build sources with the pinned JUCE source.
 
 Roland, AIRA and E-4 are trademarks of Roland Corporation. This is an independent project, not made or endorsed by Roland. The owner's manual in `docs` is Roland's material, is excluded from these licences and is not included in the studio installer/source archive.
-
-### Cross-platform builds and releases
-
-[Native build results](https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/workflows/release.yml) cover macOS Apple Silicon/Intel, Windows x64/ARM64 and Linux x64/ARM64. A successful build verifies compilation and automated MIDI/processor/VST3 tests; physical hardware and DAW acceptance remain separate checks. AU is macOS-only. Choose the architecture matching your DAW.
-
-The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs are unsigned development builds; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
-
-To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft prerelease. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.
