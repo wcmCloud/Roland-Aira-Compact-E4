@@ -180,3 +180,11 @@ SPDX: **`MIT OR GPL-3.0-only`**. Contributions use the same terms, matching the 
 **Dependency terms still apply.** JUCE 8 framework modules are AGPLv3/commercial, so linked apps/plug-ins are not MIT-only binaries. See [project licensing](LICENSE.md) and [third-party notices](THIRD_PARTY_NOTICES.md), including corresponding-source and distribution requirements. The studio package includes licence texts and build sources with the pinned JUCE source.
 
 Roland, AIRA and E-4 are trademarks of Roland Corporation. This is an independent project, not made or endorsed by Roland. The owner's manual in `docs` is Roland's material, is excluded from these licences and is not included in the studio installer/source archive.
+
+### Cross-platform builds and releases
+
+[Native build results](https://github.com/wcmCloud/Roland-Aira-Compact-E4/actions/workflows/release.yml) cover macOS Apple Silicon/Intel, Windows x64/ARM64 and Linux x64/ARM64. A successful build verifies compilation and automated MIDI/processor/VST3 tests; physical hardware and DAW acceptance remain separate checks. AU is macOS-only. Choose the architecture matching your DAW.
+
+The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs are unsigned development builds; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
+
+To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft prerelease. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.

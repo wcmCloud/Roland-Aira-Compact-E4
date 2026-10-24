@@ -103,3 +103,13 @@ if(BUILD_TESTING)
     target_link_libraries(e4_processor_tests PRIVATE AiraE4 juce::juce_audio_utils)
     add_test(NAME e4_processor_tests COMMAND e4_processor_tests)
 endif()
+
+# The stress fixtures deliberately place several independent engines on the
+# stack; Windows console executables otherwise default to a 1 MB stack.
+if(MSVC)
+    foreach(test_target e4_core_tests e4_clock_tests e4_mapping_tests e4_output_tests e4_processor_tests e4_vst3_check e4_ui_preview)
+        if(TARGET ${test_target})
+            target_link_options(${test_target} PRIVATE /STACK:16777216)
+        endif()
+    endforeach()
+endif()

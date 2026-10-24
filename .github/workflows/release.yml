@@ -1,0 +1,77 @@
+name: Native builds and releases
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: macos-15, platform: macOS, arch: arm64 }
+          - { runner: macos-15-intel, platform: macOS, arch: x64 }
+          - { runner: windows-2022, platform: Windows, arch: x64, vs: x64 }
+          - { runner: windows-11-arm, platform: Windows, arch: arm64, vs: ARM64 }
+          - { runner: ubuntu-24.04, platform: Linux, arch: x64 }
+          - { runner: ubuntu-24.04-arm, platform: Linux, arch: arm64 }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          ref: 3af3ce009f6a02f6fa651008fffb5b41743a9fab
+          path: JUCE
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libjack-jackd2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libxi-dev libgl1-mesa-dev xvfb
+      - name: Configure Unix
+        if: runner.os != 'Windows'
+        run: cmake -S . -B build-ci -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$PWD/JUCE" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+      - name: Configure Windows
+        if: runner.os == 'Windows'
+        run: cmake -S . -B build-ci -A ${{ matrix.vs }} -DJUCE_SOURCE_DIR="$pwd/JUCE" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+      - name: Build
+        run: cmake --build build-ci --config Release --parallel 3
+      - name: Tests Unix desktop and Windows
+        if: runner.os != 'Linux'
+        run: ctest --test-dir build-ci -C Release --output-on-failure
+      - name: Tests Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ctest --test-dir build-ci -C Release --output-on-failure
+      - name: Package
+        run: python scripts/package-portable.py --build-dir build-ci --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.arch }}
+          path: build-release-assets/*
+          retention-days: 14
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python -c 'import os,re; v=re.search(r"project\(AiraE4 VERSION ([0-9.]+)",open("CMakeLists.txt").read())[1]; assert os.environ["TAG"]=="v"+v'
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create draft prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" artifacts/* --draft --prerelease --title "E-4 Companion ${TAG#v}" --notes-file docs/RELEASE-NOTES.md

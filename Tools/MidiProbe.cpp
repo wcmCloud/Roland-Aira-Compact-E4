@@ -113,8 +113,14 @@ int main(int argc,char** argv) {
     if (identifier.isEmpty()) return fail("Port name/identifier must not be empty");
     if (!virtualPort && matches != 1) return fail("Input identifier is absent or ambiguous; run --list again");
     Capture capture;
-    auto input = virtualPort ? juce::MidiInput::createNewDevice(identifier,&capture)
-                             : juce::MidiInput::openDevice(identifier,&capture);
+    std::unique_ptr<juce::MidiInput> input;
+    if (virtualPort) {
+       #if JUCE_LINUX || JUCE_BSD || JUCE_MAC || JUCE_IOS
+        input = juce::MidiInput::createNewDevice(identifier,&capture);
+       #else
+        return fail("Virtual MIDI creation is unavailable on this platform; use --capture with an existing input port");
+       #endif
+    } else input = juce::MidiInput::openDevice(identifier,&capture);
     if (!input) return fail("Could not open selected MIDI input");
     const double begin = juce::Time::getMillisecondCounterHiRes();
     input->start();

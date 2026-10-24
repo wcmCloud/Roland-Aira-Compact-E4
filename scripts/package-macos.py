@@ -9,7 +9,7 @@ import plistlib
 import shlex
 import shutil
 import subprocess
-import tarfile
+from release_common import source_archive as write_source_archive, copy_legal
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +42,8 @@ artifacts = build / f'AiraE4_artefacts/{a.config}'
 source_app = artifacts / 'Standalone/E-4 Companion.app'
 info = plistlib.loads((source_app / 'Contents/Info.plist').read_bytes())
 version = info['CFBundleShortVersionString']
-arch = subprocess.check_output(['lipo', '-archs', str(source_app / 'Contents/MacOS/E-4 Companion')], text=True).strip().replace(' ', '-')
+architectures = subprocess.check_output(['lipo', '-archs', str(source_app / 'Contents/MacOS/E-4 Companion')], text=True).split()
+arch = 'universal' if set(architectures) == {'arm64','x86_64'} else '-'.join(architectures)
 out = ROOT / 'build-packages' / f'{version}-{arch}'
 if out.exists():
     # Keep earlier release artifacts recoverable rather than overwrite them.
@@ -80,34 +81,10 @@ shutil.copy2(ROOT / 'docs/ableton/E4 Studio Acceptance Project/E4 Studio Accepta
 shutil.copy2(ROOT / 'docs/ableton/README.md', kit / 'Ableton/ROUTING.md')
 shutil.copy2(ROOT / 'docs/HARDWARE_TESTS.md', kit / 'DETAILED-TESTS.md')
 shutil.copy2(ROOT / 'docs/validation/studio-preflight-2026-10-24/README.md', kit / 'VALIDATION.md')
-legal = kit / 'Licences'
-legal.mkdir()
-for name in ['LICENSE.md', 'LICENSE-MIT', 'LICENSE-GPL-3.0', 'THIRD_PARTY_NOTICES.md']:
-    shutil.copy2(ROOT / name, legal / name)
-shutil.copytree(ROOT / 'licenses', legal / 'licenses')
-# Include reproducible build sources and the pinned framework, never credentials,
-# build products, Git history or the separately owned Roland reference manual.
+copy_legal(kit / 'Licences')
 source_folder = kit / 'Sources'
 source_folder.mkdir()
-source_archive = source_folder / f'E4-Companion-{version}-source.tar.gz'
-juce = ROOT / 'build/_deps/juce-src'
-if not juce.is_dir():
-    juce = ROOT / 'JUCE'  # Extracted corresponding-source archive layout.
-if not (juce / 'CMakeLists.txt').is_file():
-    raise RuntimeError('Pinned JUCE sources are required for the source archive')
-def source_filter(info):
-    parts = Path(info.name).parts
-    if any(p in ('.git', 'bin', 'obj', '__pycache__', 'Backup', 'Ableton Project Info') for p in parts):
-        return None
-    if parts[-1] in ('.DS_Store', 'Icon\r', 'E-4_eng01_W.pdf') or parts[-1].endswith('.env'):
-        return None
-    return info
-with tarfile.open(source_archive, 'w:gz') as archive:
-    for name in ['Source','Tools','Tests','assets','docs','licenses','packaging','scripts',
-                 'CMakeLists.txt','README.md','PLAN.md','LICENSE.md','LICENSE-MIT',
-                 'LICENSE-GPL-3.0','THIRD_PARTY_NOTICES.md','.gitignore']:
-        archive.add(ROOT / name, arcname='E4-Companion-source/' + name, filter=source_filter)
-    archive.add(juce, arcname='E4-Companion-source/JUCE', filter=source_filter)
+write_source_archive(source_folder / f'E4-Companion-{version}-source.tar.gz')
 (source_folder / 'BUILD-SOURCE.txt').write_text('''Extract the source archive. From E4-Companion-source:
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$PWD/JUCE"
 cmake --build build --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_installer e4_midi_probe -j 6
@@ -124,7 +101,7 @@ sign_args = ['codesign', '--force', '--sign', identity or '-']
 sign_args += ['--timestamp', '--options', 'runtime'] if identity else ['--timestamp=none']
 run(*sign_args, probe)
 run('codesign', '--verify', '--strict', probe)
-(image / 'Read Me.txt').write_text('''E-4 Companion — macOS Apple Silicon release preview
+(image / 'Read Me.txt').write_text('''E-4 Companion — macOS release preview
 
 Quit audio hosts. Double-click E-4 Installer and select VST3, AU and/or standalone
 for your user account without administrator privileges. Existing bundles are
@@ -151,7 +128,7 @@ packages = work / 'components'
 packages.mkdir()
 dist = ET.Element('installer-gui-script', {'minSpecVersion': '2'})
 ET.SubElement(dist, 'title').text = 'E-4 Companion'
-ET.SubElement(dist, 'options', {'customize': 'always', 'require-scripts': 'false', 'hostArchitectures': arch.replace('-', ',')})
+ET.SubElement(dist, 'options', {'customize': 'always', 'require-scripts': 'false', 'hostArchitectures': ','.join(architectures)})
 ET.SubElement(dist, 'domains', {'enable_anywhere': 'true', 'enable_currentUserHome': 'false', 'enable_localSystem': 'true'})
 ET.SubElement(dist, 'allowed-os-versions')
 os_versions = dist.find('allowed-os-versions')

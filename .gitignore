@@ -14,3 +14,6 @@ scripts/signing.local.env
 # Icon renderer build products.
 Tools/IconRenderer/bin/
 Tools/IconRenderer/obj/
+
+# CI framework checkout (included in release source archives).
+/JUCE/

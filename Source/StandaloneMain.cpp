@@ -409,7 +409,7 @@ private:
     void timerCallback() override {
         const double now = juce::Time::getMillisecondCounterHiRes();
         if (now - lastTick > 2000.0)
-            disconnectPorts("App paused or Mac slept. Reconnect explicitly to resume.");
+            disconnectPorts("App paused or computer slept. Reconnect explicitly to resume.");
         lastTick = now;
         std::array<e4::MidiEvent,256> pending {};
         std::size_t count = 0;
