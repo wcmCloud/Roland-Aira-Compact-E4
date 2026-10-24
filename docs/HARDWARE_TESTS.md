@@ -34,7 +34,7 @@ Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN rout
 3. Change BPM while running. Check rate/phase transitions, no duplicate Start and no unexpected transport messages. Test 20 and 300 BPM at the bounds.
 4. Press Stop twice: expect one Stop transition and no later pulses until fresh Start. Verify held notes release. Panic should stop transport too. Stop/Start restarts from a new origin; no Continue or song-position chase is supported.
 5. Disconnect/switch route while running. Old port should receive Stop before it closes; new port must remain stopped. Quit/relaunch and verify clock master remains disabled while BPM persists.
-6. Force a timing stall or sleep/wake. Expect transport to stop rather than emit a burst of stale pulses; explicit enable/restart is required after a reported fault. A UI stall longer than two seconds should trigger the timing-thread heartbeat stop independently.
+6. Force a timing stall or sleep/wake. Expect transport to stop rather than emit a burst of stale pulses; explicit reconnect, enable and restart are required after a reported fault. A UI stall longer than two seconds should trigger the timing-thread heartbeat stop independently.
 7. Confirm incoming clock/Start/Stop are not echoed. Verify internal clock is never enabled in a routing template whose master is Live.
 
 ## AU and release gates
@@ -54,3 +54,10 @@ The AU builds but does not yet have a supported direct MIDI-output path in Live.
 | Standalone clock timing/transport | Pending | NOT RUN | |
 
 Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passed. See [wrapper results](validation/vst3-wrapper-2026-10-24.json). The hardware result rows above remain unchanged.
+
+## Sender regression checks (physical results still pending)
+
+- Generate a dense input burst while moving controls: the interface should stay responsive during normal sends, with note order preserved. Record actual latency; the input queue still drains on a UI timer.
+- Press Panic with unsent notes queued: pending presses should be cancelled, clock should stop and actual sent notes should release. Then play a fresh note without reconnecting.
+- Disconnect/quit during a burst: old endpoint should receive cleanup, and queued presses must not migrate to a new route.
+- On sender overflow, timing failure or a UI stall over two seconds, verify cleanup and explicit reconnection. A permanently blocked driver send may delay shutdown; note any driver-specific limits.

@@ -1,85 +1,55 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "MidiSession.h"
 #include "ChordPads.h"
-#include "ClockScheduler.h"
+#include "MidiOutputDriver.h"
 #include "StudioTheme.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
 public:
     explicit PortSink(std::unique_ptr<juce::MidiOutput> device)
-        : Thread("E4 MIDI clock"), output(std::move(device)) {
+        : Thread("E4 MIDI sender"), output(std::move(device)) {
+        lastHeartbeat.store(now());
         threadReady = startThread(juce::Thread::Priority::high);
     }
     ~PortSink() override {
         signalThreadShouldExit(); notify();
-        stopThread(-1); // Join before the endpoint or scheduler is destroyed.
-        stopClock();
+        stopThread(-1); // Worker cleans actual sent notes before closing the endpoint.
     }
-    void send(int status, int first, int second) override {
-        const juce::ScopedLock lock(portLock);
-        const juce::uint8 bytes[] = {static_cast<juce::uint8>(status),
-            static_cast<juce::uint8>(first), static_cast<juce::uint8>(second)};
-        output->sendMessageNow(juce::MidiMessage(bytes, 3));
-    }
+    bool ready() const noexcept { return threadReady; }
+    void send(int status,int first,int second) override { post({e4::OutputCommand::midi,status,first,second,120}); }
     bool startClock(double bpm) {
-        const juce::ScopedLock lock(portLock);
-        if (!threadReady || !clock.setTempo(bpm,now())) return false;
-        faultReported = false; watchdogFault = false;
-        lastHeartbeat = now();
-        clock.start(now(),[this](int status) { sendRealtime(status); });
-        notify();
-        return true;
+        if (!threadReady || !std::isfinite(bpm) || bpm < 20 || bpm > 300) return false;
+        heartbeat();
+        return post({e4::OutputCommand::start,0,0,0,bpm});
     }
-    void setTempo(double bpm) {
-        const juce::ScopedLock lock(portLock);
-        clock.poll(now(),[this](int status) { sendRealtime(status); });
-        clock.setTempo(bpm,now());
-        notify();
-    }
-    void stopClock() {
-        const juce::ScopedLock lock(portLock);
-        clock.stop([this](int status) { sendRealtime(status); });
-    }
-    void heartbeat() {
-        const juce::ScopedLock lock(portLock);
-        lastHeartbeat = now();
-    }
-    bool takeClockFault() {
-        const juce::ScopedLock lock(portLock);
-        if (!faultReported && (clock.hasFault() || watchdogFault)) { faultReported = true; return true; }
-        return false;
-    }
-    bool clockRunning() {
-        const juce::ScopedLock lock(portLock);
-        return clock.isRunning();
-    }
+    void setTempo(double bpm) { post({e4::OutputCommand::tempo,0,0,0,bpm}); }
+    void panicOutput() noexcept { driver.requestPanic(); notify(); }
+    void heartbeat() noexcept { lastHeartbeat.store(now(),std::memory_order_release); }
+    e4::OutputFault takeFault() noexcept { return driver.takeFault(); }
+    bool clockRunning() const noexcept { return driver.clockRunning(); }
 private:
-    static double now() { return juce::Time::getMillisecondCounterHiRes() / 1000.0; }
-    void sendRealtime(int status) {
-        const auto byte = static_cast<juce::uint8>(status);
-        output->sendMessageNow(juce::MidiMessage(&byte,1));
+    static double now() { return juce::Time::getMillisecondCounterHiRes()/1000.0; }
+    bool post(e4::OutputCommand command) {
+        const bool accepted = threadReady && driver.post(command);
+        notify(); return accepted;
+    }
+    void sendOnWorker(int status,int first,int second,int size) {
+        const juce::uint8 bytes[] = {static_cast<juce::uint8>(status),static_cast<juce::uint8>(first),static_cast<juce::uint8>(second)};
+        output->sendMessageNow(juce::MidiMessage(bytes,size));
     }
     void run() override {
+        const auto sender = [this](int status,int first,int second,int size) { sendOnWorker(status,first,second,size); };
         while (!threadShouldExit()) {
-            int sleepMilliseconds = 100;
-            { const juce::ScopedLock lock(portLock);
-              const double time = now();
-              if (clock.isRunning() && time - lastHeartbeat > 2.0) {
-                  clock.stop([this](int status) { sendRealtime(status); }); watchdogFault = true;
-              }
-              clock.poll(time,[this](int status) { sendRealtime(status); });
-              sleepMilliseconds = clock.isRunning() ? 1 : 100;
-            }
-            wait(sleepMilliseconds); // Deadline accumulation is absolute; OS timing is still best effort.
+            driver.service(now(),lastHeartbeat.load(std::memory_order_acquire),sender);
+            wait(driver.clockRunning() || driver.hasPending() ? 1 : 100);
         }
+        driver.shutdown(sender); // Discard unsent presses; release only physically sent notes.
     }
     std::unique_ptr<juce::MidiOutput> output;
-    juce::CriticalSection portLock;
-    e4::ClockScheduler clock;
+    e4::MidiOutputDriver driver;
+    std::atomic<double> lastHeartbeat {0};
     bool threadReady = false;
-    bool faultReported = false,watchdogFault = false;
-    double lastHeartbeat = 0;
 };
 
 class Companion final : public juce::Component, private juce::Timer,
@@ -163,7 +133,7 @@ public:
                 status.setText("Connect an output and enable internal clock before Start.",juce::dontSendNotification); return;
             }
             if (!sink->startClock(tempo.getValue()))
-                status.setText("Could not start timing thread. Clock remains stopped.",juce::dontSendNotification);
+                status.setText("Clock could not start. Check the connection and reconnect if needed.",juce::dontSendNotification);
         };
         stop.setButtonText("Stop"); stop.onClick = [this] { stopTransport(); };
         for (auto* c : std::array<juce::Component*,5>{&clockEnable,&tempo,&start,&stop,&clockState}) addAndMakeVisible(c);
@@ -308,6 +278,11 @@ private:
             status.setText("Could not open output. Check device connection or port ownership.",juce::dontSendNotification); return;
         }
         sink = std::make_unique<PortSink>(std::move(output));
+        if (!sink->ready()) {
+            sink.reset();
+            status.setText("Could not start the MIDI sender. Try reconnecting.",juce::dontSendNotification);
+            return;
+        }
         session.setOutput(sink.get());
         activeOutput = desiredOutput;
         if (!desiredInput.isEmpty()) {
@@ -322,7 +297,7 @@ private:
         status.setText("Connected: " + outputs.getText() + ". Avoid MIDI echo/THRU loops.",juce::dontSendNotification);
     }
     void disconnectPorts(const juce::String& reason) {
-        if (sink) sink->stopClock();
+        if (sink) sink->panicOutput();
         clockEnable.setToggleState(false,juce::dontSendNotification);
         if (input) { input->stop(); input.reset(); }
         clearPending();
@@ -335,7 +310,7 @@ private:
         if (reason.isNotEmpty()) status.setText(reason,juce::dontSendNotification);
     }
     void stopTransport() {
-        if (sink) sink->stopClock();
+        if (sink) sink->panicOutput();
         clearPending(); resetKeyboard(); session.panic();
         bend.setValue(8192,juce::dontSendNotification);
     }
@@ -371,10 +346,13 @@ private:
         } else {
             for (std::size_t i = 0; i < count; ++i) session.process(pending[i]);
         }
-        if (sink && sink->takeClockFault()) {
-            stopTransport();
-            clockEnable.setToggleState(false,juce::dontSendNotification);
-            status.setText("Clock missed a deadline and stopped. Disable other masters, then explicitly restart.",juce::dontSendNotification);
+        const auto outputFault = sink ? sink->takeFault() : e4::OutputFault::none;
+        if (outputFault != e4::OutputFault::none) {
+            disconnectPorts(outputFault == e4::OutputFault::queueOverflow
+                ? "MIDI sender overloaded and released its notes. Reconnect explicitly."
+                : outputFault == e4::OutputFault::heartbeat
+                    ? "Interface paused: MIDI stopped and notes were released. Reconnect explicitly."
+                    : "Clock deadline missed: MIDI stopped and notes were released. Reconnect explicitly.");
         }
         if (sink) sink->heartbeat();
         start.setEnabled(sink != nullptr && clockEnable.getToggleState() && !sink->clockRunning());

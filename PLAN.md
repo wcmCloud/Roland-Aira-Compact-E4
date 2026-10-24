@@ -4,6 +4,10 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Standalone outgoing notes, bend, clock and transport now share one device worker. Message-thread callbacks post to a bounded 1024-command SPSC queue instead of calling the MIDI output API or waiting on a port lock. Incoming MIDI/domain processing still uses the existing 5 ms UI drain; measured latency remains open.
+- Sender tracks actual sent notes/channels for cleanup. Priority Panic cancels pending presses without closing a healthy route. Shutdown discards unsent presses and releases only sent notes before endpoint destruction. Overflow, clock deadline or UI-heartbeat faults clean up and require explicit reconnection, preventing stale-event replay.
+- Added a portable sender test suite with fake endpoints, failure/cleanup cases and a real two-thread 20,000-event ordering stress test. All seven CTest checks pass; sender tests also pass AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Physical driver timing and hotplug acceptance remain pending.
+
 - Added consistent musical labels (middle C = C4 / MIDI 60), sharp/flat/numeric root entry and four-segment voice indicators. Engine rejection telemetry is published to the UI without locks; the display distinguishes voice limit, out-of-range notes and counter-reset conditions. Regression tests cover all 128 label round-trips, enharmonics, invalid input and processor feedback.
 - Port selection now distinguishes staged choices from the active route, offers Apply ports when connected and disables unavailable connection actions. Applying still performs the existing old-route cleanup; selecting alone sends no MIDI.
 
@@ -18,7 +22,7 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 - Physical receive-path check on 24 October: discovered E-4 MIDI IN/OUT and captured 260 incoming clock pulses over five seconds at approximately 130 BPM. Raw results and limitations are saved under docs/validation. No MIDI output was opened or messages sent; outgoing notes, looper sync, audio return and Ableton acceptance remain open.
 
 - Standalone now has an opt-in 20–300 BPM internal clock master and Start/Stop controls. MIDI Start/Clock/Stop are sent through the selected port; clock runs on a dedicated high-priority thread with absolute deadlines and tempo phase preservation. No Continue, song position or incoming-clock follow is implemented.
-- Clock defaults off and never auto-restores. Panic, Stop, route/disconnect and shutdown stop transport; missed pulse intervals stop instead of producing catch-up bursts. A two-second UI heartbeat timeout also stops clock. Shared port access is serialised outside audio callbacks. Real hardware delivery may still block, and timing guarantees remain unmeasured.
+- Clock defaults off and never auto-restores. Panic, Stop, route/disconnect and shutdown stop transport; missed pulse intervals stop instead of producing catch-up bursts. A two-second UI heartbeat timeout also stops output and releases sent notes. One sender worker owns all device writes; normal UI callbacks enqueue rather than send. Real hardware delivery may still block, and timing guarantees remain unmeasured.
 - Three test suites pass, including deterministic ten-minute 60/120/180 BPM simulations, maximum tempo, Start/Stop ordering, tempo phase changes, missed-deadline failure and explicit restart. Phase 4 is partial: physical jitter/drift captures, looper response and external-follow modes remain open.
 
 - Added shared −24…+24 semitone transpose to standalone and plug-in, including host automation. Out-of-range output pitches are dropped, not clamped. Changing transpose releases old pitches, clears pending UI performance and centres bend. Source-specific release also maps back to the actual output pitch.

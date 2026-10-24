@@ -21,3 +21,9 @@ Raw records: [port inventory](midi-ports-2026-10-24.json) and [five-second recei
 The actual Debug VST3 was discovered and loaded in a JUCE software host. All 24 checks passed, including note sample offsets across 15 sample-rate/buffer combinations, CC filtering, bend, host transpose automation and state round-trip without note replay. See [the wrapper report](vst3-wrapper-2026-10-24.json).
 
 This test opened no audio or MIDI device and transmitted no hardware messages. It is not a substitute for Ableton, the Steinberg validator or AU validation.
+
+## Dedicated sender validation
+
+All seven CTest checks pass after moving standalone device writes onto one worker. The new portable sender suite covers queued delivery, channel/pitch-aware cleanup, priority Panic, shutdown cancellation, output overflow, clock deadline faults, UI heartbeat loss and 20,000 events crossing separate producer/consumer threads. It also passes AddressSanitizer/UndefinedBehaviorSanitizer and a separate ThreadSanitizer run on this Mac.
+
+These checks use fake output endpoints. They establish software ordering and failure handling, not physical USB/DIN timing or driver hotplug behaviour.

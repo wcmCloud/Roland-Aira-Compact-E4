@@ -54,7 +54,7 @@ Open `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app` after bui
 
 The app remembers desired input/output identifiers, channel, chord root and transpose, but never automatically reconnects or replays notes. Switching routes releases the old endpoint first; disconnect, channel/transpose change and shutdown also clear held notes. Device removal is polled roughly once a second. Sleep or a UI pause over two seconds disconnects until you explicitly reconnect. Internal clock defaults off and is never automatically restored. Incoming clock is not forwarded.
 
-Notes use a short bounded input queue drained on a 5 ms UI timer. This note path is a first performance implementation: busy UI work can delay notes. Internal clock uses a separate timing thread (see below). Queue overflow drops pending events and releases owned notes. A missing physical endpoint may not receive cleanup, so device/hardware validation is still needed. Only one standalone app instance is allowed; ownership against other apps is not enforced.
+Incoming notes use a bounded queue drained on a 5 ms UI timer, so busy UI work can still delay input processing. Once generated, notes and bend enter a separate bounded queue consumed by the same dedicated sender as clock. Device send calls run exclusively on that worker; they do not block routine interface callbacks. Output overflow drops unsent presses, releases notes actually sent and disconnects until explicit reconnection. A missing physical endpoint may not receive cleanup, so device/hardware validation is still needed. Only one standalone app instance is allowed; ownership against other apps is not enforced.
 
 ## Standalone clock and transport
 
@@ -62,9 +62,17 @@ After connecting the output, enable **Internal clock (sole master)**, choose 20â
 
 Clock starts off every launch and is disabled on route changes, disconnect and removal. Only BPM is remembered. Start after Stop is a fresh restart: no Continue or song-position chase is sent. Configure the E-4 clock source for USB or MIDI as appropriate; actual looper record/play arming and Start/Stop response require hardware verification. Do not enable the internal master alongside Live Sync or another clock sender. Incoming clock and transport are neither followed nor echoed.
 
-The scheduler accumulates absolute deadlines; it does not add a period to each wake time. If a full pulse interval is missed, it sends Stop and waits for explicit restart instead of catching up in a burst. A two-second UI heartbeat timeout also stops clock independently of the UI thread. Port output is serialised under a short lock outside audio processing; a slow device/driver can still delay both note and clock sends. This is best-effort desktop scheduling, with no measured hardware jitter guarantee.
+The scheduler accumulates absolute deadlines; it does not add a period to each wake time. If a full pulse interval is missed, the sender sends Stop, releases its notes and waits for explicit reconnection instead of catching up in a burst. A two-second UI heartbeat timeout performs the same cleanup independently, even with clock off. All note, bend and clock device calls run on one sender thread. A slow device/driver can still delay that thread, and closing a route waits for it to finish cleanup. This is best-effort desktop scheduling, with no measured hardware jitter guarantee.
 
 Software simulations at 60/120/180 BPM produce the expected pulse counts over ten minutes with under one microsecond of calculated deadline drift. Those results test the planner, not thread wake-up jitter, physical MIDI delivery or the E-4. Capture actual timing under load before using clock in a performance.
+
+## Sender reliability
+
+The standalone uses a 1024-command queue from the message thread to one MIDI sender. Normal note/bend/clock commands keep order, and the worker tracks the actual output pitches and channels it sent. Stop/Panic has a separate priority signal: it cancels pending presses, sends Stop if needed and releases sent notes, without closing a healthy route. Fresh input can resume after Panic.
+
+Disconnect/shutdown discards unsent presses and performs final cleanup on the worker before destroying the endpoint. Queue overflow, a missed clock pulse or an overdue UI heartbeat performs fail-closed cleanup and requires explicit reconnection. A physically unavailable endpoint or permanently blocked OS send cannot be guaranteed to receive the final messages; hardware hotplug/load tests remain pending.
+
+Portable tests exercise queue delivery, actual-sent-note cleanup, overflow, heartbeat loss, priority panic and 20,000 events crossing real producer/consumer threads. The sender suite passes AddressSanitizer, UndefinedBehaviorSanitizer and ThreadSanitizer. These tests use fake endpoints and do not measure device latency.
 
 ## Debug launcher
 
@@ -104,7 +112,7 @@ Prerequisites: Xcode command line tools, CMake 3.22+ and a JUCE checkout. These 
 ```sh
 cd "/Users/chris/Documents/GitHub/Aira E4"
 cmake -S . -B build -G Xcode -DJUCE_SOURCE_DIR="/absolute/path/to/JUCE"
-cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests e4_vst3_check
+cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests e4_output_tests e4_vst3_check
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
@@ -141,7 +149,7 @@ It verifies note output/sample offsets across 44.1/48/96 kHz and 32/64/128/512/1
 
 Core tests cover ownership, limits, filtering/release interactions, channel cleanup, note/bend boundaries, panic and 1000 stress cycles. A second test target exercises the actual JUCE processor: sample offsets, filtering, state round-trip, invalid state, bypass and overload cleanup. Run all three with CTest after building `e4_core_tests`, `e4_processor_tests` and `e4_clock_tests`.
 
-VST3, AU and standalone Debug builds pass in `build-check`; all six CTest checks pass (core, clock, processor, VST3 wrapper, diagnostic help and invalid-argument checks). The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
+VST3, AU and standalone Debug builds pass in `build-check`; all seven CTest checks pass (core, clock, sender, processor, VST3 wrapper, diagnostic help and invalid-argument checks). The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
 
 Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on Apple clang 21, arm64. Read-only E-4 discovery and incoming clock capture passed. Outgoing hardware and DAW integration remain untested. See PLAN.md for the current milestone status.
 
