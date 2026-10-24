@@ -12,6 +12,7 @@
 [![Project licence](https://img.shields.io/badge/project%20licence-MIT%20or%20GPL--3.0-28323D?style=for-the-badge)](#licence)
 
 [**Get started**](#getting-started) &nbsp;·&nbsp;
+[**Screenshots**](#screenshots) &nbsp;·&nbsp;
 [**Connect the E-4**](#connecting-the-e-4) &nbsp;·&nbsp;
 [**Ableton routing**](#ableton-live) &nbsp;·&nbsp;
 [**Studio test kit**](docs/studio/START-HERE.md) &nbsp;·&nbsp;
@@ -19,7 +20,7 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/ui/standalone.png" alt="Standalone interface with MIDI routing, chord pads, keyboard and clock controls"></td>
+    <td width="50%"><img src="docs/ui/standalone-live.jpg" alt="Standalone interface with MIDI routing, chord pads, keyboard and clock controls"></td>
     <td width="50%"><img src="docs/ui/plugin.png" alt="Plug-in interface with keyboard, chord pads, scales and performance controls"></td>
   </tr>
   <tr>
@@ -28,7 +29,7 @@
   </tr>
 </table>
 
-<sub>Interface previews rendered from the native JUCE components. Hardware/host acceptance is recorded separately.</sub>
+<sub>Standalone screenshot captured from the macOS app; plug-in preview rendered from its native JUCE component. Hardware/host acceptance is recorded separately.</sub>
 
 </div>
 
@@ -43,6 +44,32 @@
 
 > [!IMPORTANT]
 > This app requires the physical E-4 for sound. It produces no software audio and cannot remotely edit the hardware's reverb, formant, carrier or other knobs through the documented MIDI implementation.
+
+## Screenshots
+
+### Standalone and plug-in app
+
+The screenshots at the top show the standalone MIDI console and shared VST3/AU performance interface, including the E-4 microphone logo. Routing, channel and clock settings are built into the standalone sidebar; scale, transpose and bend controls are on the main performance panel.
+
+### Graphical installer
+
+Choose VST3, AU and/or standalone. The installer shows the same E-4 logo and preserves existing user copies in a backup folder.
+
+<img src="docs/ui/installer-live.jpg" width="650" alt="E-4 graphical macOS installer with its logo and selectable VST3, Audio Unit and standalone formats">
+
+### Controller settings and MIDI learn
+
+Eight mapping slots, channel/input choices, Consume controls, bend calibration and reusable controller profiles.
+
+<img src="docs/ui/controller-settings-live.jpg" width="922" alt="Running MIDI learn settings dialog showing eight controller mappings, bend centre/deadband and profile buttons">
+
+### Chord-bank settings
+
+Edit pad names and intervals, choose inversions and octave placement, preview the resulting notes and save/load banks.
+
+<img src="docs/ui/chord-settings-live.jpg" width="762" alt="Running chord-bank settings dialog with four pad names, semitone intervals, inversions, octave settings and note previews">
+
+Installer, standalone and settings images are captures of the running macOS windows. They show example settings, not an instruction to change the E-4 to the pictured channel/root. The plug-in image is a native component preview. [Screenshot details](docs/ui/README.md).
 
 ## Getting started
 
@@ -96,8 +123,6 @@ The [saved studio set and routing guide](docs/ableton/README.md) were prepared i
 - **Transpose/bend:** transpose ±24 semitones; out-of-range notes are rejected. Bend springs to centre; the E-4 determines its audible range.
 - **MIDI learn:** eight slots for notes/CCs, any or specific channels, consumed or passed-through note triggers, pads, transpose, inversions, bend and Panic. Learning captures without triggering; release and use a fresh gesture after Apply. `.e4map` imports stage edits before Apply.
 - **State:** the plug-in embeds banks, mappings and settings in the host project. Standalone remembers applied settings on normal exit, starts disconnected and leaves clock off.
-
-<img src="docs/ui/controller-mappings.png" width="760" alt="Eight-slot controller mapping editor with MIDI learn, consume choices and profile controls">
 
 ### Standalone clock
 

@@ -2,6 +2,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "NoteNames.h"
 #include "MidiEngine.h"
+#include "E4BrandData.h"
 
 namespace e4::ui {
 inline const juce::Colour background{0xff101417}, panel{0xff191f24}, edge{0xff30393f};
@@ -188,10 +189,15 @@ inline void surface(juce::Graphics& g,int width,int height,bool standalone,bool 
     g.fillAll(background);
     g.setGradientFill(juce::ColourGradient(juce::Colour(0xff25312a),0,0,background,designWidth*0.65f,200,false));
     g.fillRect(0.0f,0.0f,designWidth,92.0f);
-    g.setColour(accent); g.fillRoundedRectangle(24,26,5,40,2);
-    g.setColour(text); g.setFont(font(37,true)); g.drawText("E-4",42,18,95,48,juce::Justification::left);
-    g.setColour(muted); g.setFont(font(11,true)); g.drawText("COMPANION",143,28,130,18,juce::Justification::left);
-    g.setFont(font(11)); g.drawText(standalone ? "Standalone performance console" : "Hardware performance plug-in",143,47,240,16,juce::Justification::left);
+    static const auto logo = [] {
+        int size = 0;
+        const auto* data = E4BrandData::getNamedResource(E4BrandData::namedResourceList[0],size);
+        return juce::ImageCache::getFromMemory(data,size);
+    }();
+    g.drawImageWithin(logo,18,12,64,64,juce::RectanglePlacement::centred);
+    g.setColour(text); g.setFont(font(37,true)); g.drawText("E-4",88,18,85,48,juce::Justification::left);
+    g.setColour(muted); g.setFont(font(11,true)); g.drawText("COMPANION",182,28,130,18,juce::Justification::left);
+    g.setFont(font(11)); g.drawText(standalone ? "Standalone performance console" : "Hardware performance plug-in",182,47,240,16,juce::Justification::left);
     g.setColour(connected ? accent : muted); g.fillEllipse(designWidth-442,39,6,6);
     g.setFont(font(11,true)); g.drawText(standalone ? (connected ? "CONNECTED" : "DISCONNECTED") : "HOST ROUTING",static_cast<int>(designWidth)-426,31,170,22,juce::Justification::left);
     if (standalone) {

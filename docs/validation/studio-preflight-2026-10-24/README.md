@@ -33,3 +33,9 @@ The final icon-bearing DMG is Accepted by Apple (dmg-notary.json), stapled and G
 ## README and licensing refresh
 
 The final DMG was rebuilt after the T-8-style README and MIT OR GPL-3.0-only project licensing were added. Its Studio Test Kit/Licences files match the repository texts. Studio Test Kit/Sources includes the build/project sources and JUCE 8.0.10, excluding the Roland manual, credentials, Git history and build outputs. Extracted sources configure successfully against included JUCE and pass core, clock, mapping and sender checks. The final image is Apple Accepted, stapled and Gatekeeper accepted; this folder’s notary report/checksums now identify this refreshed image. Linked binaries retain JUCE AGPL/commercial terms as documented in THIRD_PARTY_NOTICES.md.
+
+## Visible branding and screenshot refresh
+
+The E-4 logo is embedded as binary image data and painted inside the standalone/plug-in headers and graphical installer header, in addition to OS bundle icons. README adds native macOS standalone, installer, controller-settings and chord-settings window captures; the plug-in image remains an explicitly labelled native component preview. All eight project checks and Steinberg’s 47 checks pass after the UI change. Final packaging includes the updated sources and images.
+
+The visible-branding build was installed through the graphical installer, and the new header logo was visually confirmed in the installed standalone. Installed AU validation and all 31 VST3 wrapper checks pass. Final payload file hashes match the installation; notarisation and checksums above identify the screenshot/logo refresh. Hardware acceptance remains unchanged.

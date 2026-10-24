@@ -34,6 +34,8 @@ elseif(E4_FETCH_JUCE)
 else()
     message(FATAL_ERROR "Set JUCE_SOURCE_DIR or E4_FETCH_JUCE=ON; use E4_BUILD_APPS=OFF for core tests only.")
 endif()
+juce_add_binary_data(e4_brand NAMESPACE E4BrandData HEADER_NAME E4BrandData.h
+    SOURCES assets/icon/png/app-icon-256.png)
 set(E4_PLUGIN_FORMATS VST3)
 if(APPLE)
     list(APPEND E4_PLUGIN_FORMATS AU)
@@ -51,7 +53,7 @@ juce_add_plugin(AiraE4
     VST3_CATEGORIES Instrument Tools)
 target_sources(AiraE4 PRIVATE Source/PluginProcessor.cpp Source/PluginProcessor.h)
 target_compile_definitions(AiraE4 PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
-target_link_libraries(AiraE4 PRIVATE juce::juce_audio_utils PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+target_link_libraries(AiraE4 PRIVATE juce::juce_audio_utils PUBLIC e4_brand juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
 # Dedicated MIDI-only app: does not open or require an audio device.
 juce_add_gui_app(AiraE4_Standalone
@@ -61,7 +63,7 @@ juce_add_gui_app(AiraE4_Standalone
 target_sources(AiraE4_Standalone PRIVATE Source/StandaloneMain.cpp)
 set_target_properties(AiraE4_Standalone PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AiraE4_artefacts/$<CONFIG>/Standalone")
-target_link_libraries(AiraE4_Standalone PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+target_link_libraries(AiraE4_Standalone PRIVATE e4_brand juce::juce_audio_utils juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 target_compile_definitions(AiraE4_Standalone PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 
 if(APPLE)
@@ -71,7 +73,7 @@ if(APPLE)
         ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/png/app-icon-256.png")
     target_sources(e4_installer PRIVATE Tools/InstallerMain.cpp)
     target_compile_definitions(e4_installer PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
-    target_link_libraries(e4_installer PRIVATE juce::juce_gui_basics juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+    target_link_libraries(e4_installer PRIVATE e4_brand juce::juce_gui_basics juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 endif()
 
 juce_add_console_app(e4_midi_probe PRODUCT_NAME "E4 MIDI Probe")

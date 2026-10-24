@@ -4,6 +4,7 @@
 #include <thread>
 #include <vector>
 #include <stdexcept>
+#include "E4BrandData.h"
 
 namespace {
 struct Format { const char* name; const char* directory; };
@@ -67,9 +68,13 @@ public:
         go.onClick=[this] { begin(); };addAndMakeVisible(go);setSize(650,440);
     }
     ~Content() override { if(worker.joinable())worker.join(); }
-    void paint(juce::Graphics& g) override {g.fillAll(juce::Colour(0xff171d25));g.setColour(juce::Colour(0xff27323d));g.fillRoundedRectangle(22,130,606,132,14);}
+    void paint(juce::Graphics& g) override {
+        g.fillAll(juce::Colour(0xff171d25));g.setColour(juce::Colour(0xff27323d));g.fillRoundedRectangle(22,130,606,132,14);
+        static const auto logo=[] {int size=0;const auto* data=E4BrandData::getNamedResource(E4BrandData::namedResourceList[0],size);return juce::ImageCache::getFromMemory(data,size);}();
+        g.drawImageWithin(logo,24,20,64,64,juce::RectanglePlacement::centred);
+    }
     void resized() override {
-        title.setBounds(28,20,594,45);subtitle.setBounds(30,67,590,26);detail.setBounds(30,96,590,32);
+        title.setBounds(100,20,520,45);subtitle.setBounds(102,67,518,26);detail.setBounds(30,96,590,32);
         vst.setBounds(38,143,570,30);au.setBounds(38,182,570,30);app.setBounds(38,221,570,30);
         status.setBounds(30,277,590,91);go.setBounds(410,378,210,40);
     }
