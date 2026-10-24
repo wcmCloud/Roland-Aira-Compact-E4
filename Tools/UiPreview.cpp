@@ -21,6 +21,15 @@ int main(int argc,char** argv) {
     E4Processor processor;
     std::unique_ptr<juce::AudioProcessorEditor> editor{processor.createEditor()};
     if (!render(*editor,"plugin.png")) return 1;
+    editor.reset();
+    processor.prepareToPlay(48000,128);
+    juce::AudioBuffer<float> audio(2,128);
+    juce::MidiBuffer midi;
+    processor.processBlock(audio,midi);
+    for (int note : {60,64,67}) midi.addEvent(juce::MidiMessage::noteOn(1,note,static_cast<juce::uint8>(100)),0);
+    processor.processBlock(audio,midi);
+    editor.reset(processor.createEditor());
+    if (!render(*editor,"plugin-incoming.png")) return 1;
     std::cout << "Rendered standalone and plug-in UI without opening devices or loading preferences.\n";
     return 0;
 }

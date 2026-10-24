@@ -3,6 +3,7 @@
 #include "MidiEngine.h"
 #include "ChordPads.h"
 #include "PerformanceQueue.h"
+#include "InputNoteState.h"
 #include <atomic>
 class E4Processor final : public juce::AudioProcessor {
 public:
@@ -18,6 +19,7 @@ public:
     int activeVoices() const noexcept { return voiceCount.load(); }
     std::uint32_t rejectionCount() const noexcept { return rejectedCount.load(); }
     e4::MidiEngine::Rejection lastRejection() const noexcept { return static_cast<e4::MidiEngine::Rejection>(rejectedReason.load()); }
+    std::array<std::uint64_t,2> incomingNotes() const noexcept { return {inputLow.load(),inputHigh.load()}; }
     juce::AudioProcessorValueTreeState parameters;
     bool isBusesLayoutSupported(const BusesLayout&) const override;
     const juce::String getName() const override { return "E-4 Companion"; }
@@ -35,6 +37,8 @@ public:
     void getStateInformation(juce::MemoryBlock&) override;
     void setStateInformation(const void*, int) override;
 private:
+    e4::InputNoteState inputNotes;
+    std::atomic<std::uint64_t> inputLow {0},inputHigh {0};
     e4::MidiEngine engine;
     juce::MidiBuffer output;
     e4::PerformanceQueue performance;

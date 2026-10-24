@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
+#include "PerformanceKeyboard.h"
 #include <iostream>
 int main() {
+    juce::ScopedJuceInitialiser_GUI initialiser;
     int failures = 0;
     const auto check = [&failures](bool ok, const char* label) {
         if (!ok) { ++failures; std::cerr << "FAIL: " << label << '\n'; }
@@ -173,6 +175,46 @@ int main() {
     rejectionProcessor.processBlock(audio,midi);
     check(midi.getNumEvents() == 1 && (*midi.begin()).getMessage().isNoteOn()
         && (*midi.begin()).samplePosition == 2,"fresh fifth pitch works after full release");
+    E4Processor incoming;
+    incoming.prepareToPlay(48000,128);
+    midi.clear(); incoming.processBlock(audio,midi);
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(1,60,static_cast<juce::uint8>(100)),0);
+    incoming.processBlock(audio,midi);
+    check(incoming.incomingNotes()[0] == (std::uint64_t{1}<<60) && midi.getNumEvents() == 1,
+          "incoming host note publishes highlight without generating extra output");
+    incoming.requestUiRelease(); midi.clear(); incoming.processBlock(audio,midi);
+    check(incoming.incomingNotes()[0] == (std::uint64_t{1}<<60),"editor close preserves external highlight ownership");
+    incoming.requestPanic(); midi.clear(); incoming.processBlock(audio,midi);
+    check(incoming.incomingNotes()[0] == 0,"panic clears host note highlights");
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOn(16,127,static_cast<juce::uint8>(100)),0);
+    incoming.processBlock(audio,midi);
+    check(incoming.incomingNotes()[1] == (std::uint64_t{1}<<63),"high incoming notes publish safely");
+    midi.clear(); incoming.processBlockBypassed(audio,midi);
+    check(incoming.incomingNotes()[1] == 0,"bypass clears incoming highlights");
+    struct KeyboardListener final : juce::MidiKeyboardState::Listener {
+        int ons = 0,offs = 0;
+        void handleNoteOn(juce::MidiKeyboardState*,int,int,float) override { ++ons; }
+        void handleNoteOff(juce::MidiKeyboardState*,int,int,float) override { ++offs; }
+    } listener;
+    juce::MidiKeyboardState mouseKeys;
+    mouseKeys.addListener(&listener);
+    e4::ui::PerformanceKeyboard display(mouseKeys,juce::MidiKeyboardComponent::horizontalKeyboard);
+    display.setSize(658,86); display.setAvailableRange(36,84);
+    display.showIncoming(std::uint64_t{1}<<60,0);
+    check(display.incomingDown(60) && listener.ons == 0 && listener.offs == 0
+        && !mouseKeys.isNoteOn(1,60),"external highlights are visual only and cannot feed MIDI back");
+    mouseKeys.noteOn(1,60,1.0f);
+    display.showIncoming(0,0);
+    check(mouseKeys.isNoteOn(1,60) && listener.offs == 0,"external release cannot release a mouse-held note");
+    mouseKeys.noteOff(1,60,0.0f);
+    juce::MidiBuffer mouseMidi;
+    mouseKeys.processNextMidiBuffer(mouseMidi,0,128,true);
+    check(listener.ons == 1 && listener.offs == 1 && mouseMidi.getNumEvents() == 2,"overlap still generates exactly one UI press/release pair");
+    display.showIncoming(0,std::uint64_t{1}<<63);
+    check(display.getRangeEnd() == 127 && display.incomingDown(127),"keyboard view follows high incoming notes");
+    display.showIncoming(1,0);
+    check(display.getRangeStart() == 0 && display.incomingDown(0),"keyboard view follows low incoming notes");
+    mouseKeys.removeListener(&listener);
     std::cout << "Processor integration: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

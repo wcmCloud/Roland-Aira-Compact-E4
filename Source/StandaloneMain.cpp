@@ -3,6 +3,8 @@
 #include "ChordPads.h"
 #include "MidiOutputDriver.h"
 #include "StudioTheme.h"
+#include "PerformanceKeyboard.h"
+#include "InputNoteState.h"
 
 namespace {
 class PortSink final : public e4::MidiSink, private juce::Thread {
@@ -318,7 +320,7 @@ private:
     void releasePads() {
         chords.releaseAll([this](e4::MidiEvent event,int source) { session.process(event,source); });
     }
-    void resetKeyboard() { releasePads(); keys.allNotesOff(0); }
+    void resetKeyboard() { releasePads(); keys.allNotesOff(0); inputNotes.clear(); keyboard.showIncoming(0,0); }
     void handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message) override {
         if (message.getRawDataSize() != 3) return;
         const auto* data = message.getRawData();
@@ -344,7 +346,11 @@ private:
             resetKeyboard(); session.panic();
             status.setText("MIDI input overflow: notes released. Reduce input traffic.",juce::dontSendNotification);
         } else {
-            for (std::size_t i = 0; i < count; ++i) session.process(pending[i]);
+            for (std::size_t i = 0; i < count; ++i) {
+                session.process(pending[i]);
+                inputNotes.process(pending[i].status,pending[i].first,pending[i].second);
+            }
+            keyboard.showIncoming(inputNotes.low(),inputNotes.high());
         }
         const auto outputFault = sink ? sink->takeFault() : e4::OutputFault::none;
         if (outputFault != e4::OutputFault::none) {
@@ -380,7 +386,8 @@ private:
     juce::Array<juce::MidiDeviceInfo> inputDevices,outputDevices;
     juce::String activeInput,activeOutput,rememberedInput,rememberedOutput;
     juce::MidiKeyboardState keys;
-    juce::MidiKeyboardComponent keyboard;
+    e4::InputNoteState inputNotes;
+    e4::ui::PerformanceKeyboard keyboard;
     juce::Label title,help,inputLabel,outputLabel,channelLabel,bendLabel,status,voices;
     juce::ComboBox inputs,outputs;
     juce::Slider channel,bend,root,transpose,tempo;

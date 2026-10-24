@@ -4,6 +4,9 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Fixed missing external-keyboard/host-clip highlights. Incoming-note display state is tracked separately by input channel and repeated holds, then painted alongside mouse/computer-keyboard state. Visual updates never call note listeners or generate MIDI. The view follows out-of-range incoming pitches; highlights show input pitches before transpose.
+- Added reset and overlap tests, a processor-level publication check and native component checks proving display-only updates cannot retrigger output or release a mouse-held key. The preview tool now includes a synthetic incoming-chord image. Actual device timing/performance acceptance remains separate.
+
 - Standalone outgoing notes, bend, clock and transport now share one device worker. Message-thread callbacks post to a bounded 1024-command SPSC queue instead of calling the MIDI output API or waiting on a port lock. Incoming MIDI/domain processing still uses the existing 5 ms UI drain; measured latency remains open.
 - Sender tracks actual sent notes/channels for cleanup. Priority Panic cancels pending presses without closing a healthy route. Shutdown discards unsent presses and releases only sent notes before endpoint destruction. Overflow, clock deadline or UI-heartbeat faults clean up and require explicit reconnection, preventing stale-event replay.
 - Added a portable sender test suite with fake endpoints, failure/cleanup cases and a real two-thread 20,000-event ordering stress test. All seven CTest checks pass; sender tests also pass AddressSanitizer/UndefinedBehaviorSanitizer and ThreadSanitizer. Physical driver timing and hotplug acceptance remain pending.

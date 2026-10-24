@@ -4,9 +4,9 @@ JUCE C++17 starter for a Roland AIRA E-4 hardware companion: VST3, AU and Standa
 
 ## Interface
 
-The standalone and plug-in share a custom dark studio theme with lime accents, tinted momentary chord pads, rounded numeric controls and a full-width keyboard. Standalone groups device routing and clock in a sidebar; both versions keep performance controls and Panic prominent. Bend displays Centre or a percentage while retaining its existing MIDI range. Root labels use C4 (60) for middle C and accept MIDI numbers, sharp/flat names or their own formatted labels. The keyboard uses the same octave convention. A four-segment voice indicator flashes briefly for rejected notes, distinguishing the four-voice limit from out-of-range transposition. Connection status describes the opened MIDI route, not a hardware handshake.
+The standalone and plug-in share a custom dark studio theme with lime accents, tinted momentary chord pads, rounded numeric controls and a full-width keyboard. Standalone groups device routing and clock in a sidebar; both versions keep performance controls and Panic prominent. Bend displays Centre or a percentage while retaining its existing MIDI range. Root labels use C4 (60) for middle C and accept MIDI numbers, sharp/flat names or their own formatted labels. The keyboard uses the same octave convention. Incoming MIDI highlights the original input notes independently of on-screen key presses, without retriggering output. The 49-note view follows incoming notes outside its current range; transpose does not change the displayed input pitch. A four-segment voice indicator flashes briefly for rejected notes, distinguishing the four-voice limit from out-of-range transposition. Connection status describes the opened MIDI route, not a hardware handshake.
 
-Standalone defaults to 1040 × 780 and can resize; the plug-in is 960 × 650. Component-rendered previews are in [docs/ui](docs/ui). To regenerate them without opening devices or reading/writing standalone preferences:
+Standalone defaults to 1040 × 780 and can resize; the plug-in is 960 × 650. Component-rendered previews are in [docs/ui](docs/ui). The incoming-note preview uses synthetic in-memory notes, not physical device traffic. To regenerate them without opening devices or reading/writing standalone preferences:
 
 ```sh
 cmake --build build-check --target e4_ui_preview

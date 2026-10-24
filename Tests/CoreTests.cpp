@@ -1,4 +1,5 @@
 #include "MidiEngine.h"
+#include "InputNoteState.h"
 #include "NoteNames.h"
 #include "MidiSession.h"
 #include "ChordPads.h"
@@ -245,6 +246,18 @@ int main() {
     feedback.process(0x80,120,0,emit);
     check(feedback.rejectionCount() == 2 && feedback.lastRejection() == e4::MidiEngine::Rejection::outOfRange
         && events.empty(),"out-of-range feedback is separate from voice limit and emits no invalid MIDI");
+    e4::InputNoteState inputDisplay;
+    inputDisplay.process(0x90,60,100); inputDisplay.process(0x91,60,100); inputDisplay.process(0x90,60,100);
+    inputDisplay.process(0x80,60,0); inputDisplay.process(0x81,60,0);
+    check(inputDisplay.isDown(60),"incoming display keeps repeated/channel-overlapping holds");
+    inputDisplay.process(0x90,60,0);
+    check(!inputDisplay.isDown(60),"velocity-zero input releases final display hold");
+    inputDisplay.process(0x90,0,1); inputDisplay.process(0x9f,127,127);
+    check(inputDisplay.low() == 1 && inputDisplay.high() == (std::uint64_t{1}<<63),"display masks cover MIDI endpoints");
+    inputDisplay.process(0xb0,0,0); inputDisplay.process(0xe0,127,127);
+    check(inputDisplay.isDown(0) && inputDisplay.isDown(127),"non-note input does not alter highlights");
+    inputDisplay.clear();
+    check(inputDisplay.low() == 0 && inputDisplay.high() == 0,"panic/disconnect clears incoming highlights");
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

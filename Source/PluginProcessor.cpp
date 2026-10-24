@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "StudioTheme.h"
+#include "PerformanceKeyboard.h"
 
 namespace {
 class E4Editor final : public juce::AudioProcessorEditor, private juce::Timer,
@@ -47,6 +48,7 @@ public:
         e4::ui::keyboardStyle(keyboard);
         keys.addListener(this);
         keyboard.setAvailableRange(36,84); keyboard.setScrollButtonsVisible(false);
+        const auto incoming = owner.incomingNotes(); keyboard.showIncoming(incoming[0],incoming[1]);
         for (auto* c : std::array<juce::Component*,9>{&title,&info,&channel,&root,&transpose,&panic,&bend,&status,&keyboard})
             addAndMakeVisible(c);
         setSize(960,650);
@@ -79,12 +81,13 @@ private:
     }
     void timerCallback() override {
         juce::MidiBuffer unused; keys.processNextMidiBuffer(unused,0,1,false);
+        const auto incoming = owner.incomingNotes(); keyboard.showIncoming(incoming[0],incoming[1]);
         voiceDisplay.update(owner.activeVoices(),owner.rejectionCount(),owner.lastRejection());
     }
     e4::ui::Theme theme;
     E4Processor& owner;
     juce::MidiKeyboardState keys;
-    juce::MidiKeyboardComponent keyboard;
+    e4::ui::PerformanceKeyboard keyboard;
     e4::ui::VoiceDisplay voiceDisplay;
     juce::TooltipWindow tooltips {this,600};
     juce::Label title,info,status,channelLabel,rootLabel,transposeLabel,bendLabel;
@@ -136,6 +139,7 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
         performance.discard();
         chords.releaseAll(send);
         if (panic) {
+            inputNotes.clear();
             if (!channelChanged && !transposeChanged) engine.panic(emit);
         }
         else {
@@ -154,7 +158,7 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
             stopped = wasPlaying && !playing;
             wasPlaying = playing;
         }
-    if (stopped) { performance.discard(); chords.releaseAll(send); engine.panic(emit); }
+    if (stopped) { inputNotes.clear(); performance.discard(); chords.releaseAll(send); engine.panic(emit); }
     e4::PerformanceCommand command;
     for (int n = 0; n < 256 && performance.pop(command); ++n) {
         switch (command.kind) {
@@ -171,12 +175,14 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
     int count = 0;
     for (const auto metadata : midi) {
         position = juce::jlimit(0, audio.getNumSamples() - 1, metadata.samplePosition);
-        if (++count > 2048) { chords.releaseAll(send); engine.panic(emit); break; }
+        if (++count > 2048) { inputNotes.clear(); chords.releaseAll(send); engine.panic(emit); break; }
         // Read raw bytes: copying a long SysEx MidiMessage could allocate here.
         if (metadata.numBytes != 3) continue;
         const auto* bytes = metadata.data;
+        inputNotes.process(bytes[0],bytes[1],bytes[2]);
         engine.process(bytes[0], bytes[1], bytes[2], emit);
     }
+    inputLow.store(inputNotes.low()); inputHigh.store(inputNotes.high());
     voiceCount.store(engine.activeVoices());
     rejectedReason.store(static_cast<int>(engine.lastRejection()));
     rejectedCount.store(engine.rejectionCount());
@@ -187,6 +193,7 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
 void E4Processor::processBlockBypassed(juce::AudioBuffer<float>& audio, juce::MidiBuffer& midi) {
     audio.clear();
     midi.clear();
+    inputNotes.clear(); inputLow.store(0); inputHigh.store(0);
     if (audio.getNumSamples() == 0) { panicRequested.store(true); return; }
     performance.discard();
     if (bypassed) return;
