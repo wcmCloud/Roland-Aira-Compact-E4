@@ -188,29 +188,29 @@ inline void surface(juce::Graphics& g,int width,int height,bool standalone,bool 
     g.addTransform(juce::AffineTransform::scale(static_cast<float>(width)/designWidth,static_cast<float>(height)/designHeight));
     g.fillAll(background);
     g.setGradientFill(juce::ColourGradient(juce::Colour(0xff25312a),0,0,background,designWidth*0.65f,200,false));
-    g.fillRect(0.0f,0.0f,designWidth,92.0f);
+    g.fillRect(0.0f,0.0f,designWidth,56.0f);
     static const auto logo = [] {
         int size = 0;
         const auto* data = E4BrandData::getNamedResource(E4BrandData::namedResourceList[0],size);
         return juce::ImageCache::getFromMemory(data,size);
     }();
-    g.drawImageWithin(logo,18,12,64,64,juce::RectanglePlacement::centred);
-    g.setColour(text); g.setFont(font(37,true)); g.drawText("E-4",88,18,85,48,juce::Justification::left);
-    g.setColour(muted); g.setFont(font(11,true)); g.drawText("COMPANION",182,28,130,18,juce::Justification::left);
-    g.setFont(font(11)); g.drawText(standalone ? "Standalone performance console" : "Hardware performance plug-in",182,47,240,16,juce::Justification::left);
-    g.setColour(connected ? accent : muted); g.fillEllipse(designWidth-442,39,6,6);
-    g.setFont(font(11,true)); g.drawText(standalone ? (connected ? "CONNECTED" : "DISCONNECTED") : "HOST ROUTING",static_cast<int>(designWidth)-426,31,170,22,juce::Justification::left);
+    g.drawImageWithin(logo,24,8,40,40,juce::RectanglePlacement::centred);
+    g.setColour(text); g.setFont(font(28,true)); g.drawText("E-4",76,9,76,38,juce::Justification::left);
+    g.setColour(muted); g.setFont(font(11,true)); g.drawText("COMPANION",168,9,130,16,juce::Justification::left);
+    g.setFont(font(11)); g.drawText(standalone ? "Standalone performance console" : "Hardware performance plug-in",168,28,240,16,juce::Justification::left);
+    g.setColour(connected ? accent : muted); g.fillEllipse(designWidth-442,25,6,6);
+    g.setFont(font(11,true)); g.drawText(standalone ? (connected ? "CONNECTED" : "DISCONNECTED") : "HOST ROUTING",static_cast<int>(designWidth)-426,17,170,22,juce::Justification::left);
     if (standalone) {
-        card(g,{24,100,270,262},"01 / MIDI ROUTING");
-        card(g,{24,376,270,294},"02 / CLOCK & TRANSPORT");
-        card(g,{310,100,706,300},"PERFORMANCE");
-        card(g,{310,414,706,152},"CHORD PALETTE");
-        card(g,{310,580,706,160},"KEYBOARD");
+        card(g,{24,64,270,262},"01 / MIDI ROUTING");
+        card(g,{24,340,270,294},"02 / CLOCK & TRANSPORT");
+        card(g,{310,64,706,300},"PERFORMANCE");
+        card(g,{310,378,706,152},"CHORD PALETTE");
+        card(g,{310,544,706,196},"KEYBOARD");
         card(g,{24,754,992,72},"");
     } else {
-        card(g,{24,100,912,280},"PERFORMANCE");
-        card(g,{24,394,912,144},"CHORD PALETTE");
-        card(g,{24,552,912,128},"KEYBOARD");
+        card(g,{24,64,912,280},"PERFORMANCE");
+        card(g,{24,358,912,144},"CHORD PALETTE");
+        card(g,{24,516,912,164},"KEYBOARD");
         g.setColour(muted); g.setFont(font(11)); g.drawText("MIDI TO YOUR HARDWARE. AUDIO FROM YOUR E-4.",24,691,912,16,juce::Justification::left);
     }
 }

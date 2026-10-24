@@ -101,7 +101,7 @@ sign_args = ['codesign', '--force', '--sign', identity or '-']
 sign_args += ['--timestamp', '--options', 'runtime'] if identity else ['--timestamp=none']
 run(*sign_args, probe)
 run('codesign', '--verify', '--strict', probe)
-(image / 'Read Me.txt').write_text('''E-4 Companion — macOS release preview
+(image / 'Read Me.txt').write_text('''E-4 Companion — macOS release
 
 Quit audio hosts. Double-click E-4 Installer and select VST3, AU and/or standalone
 for your user account without administrator privileges. Existing bundles are

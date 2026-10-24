@@ -18,3 +18,5 @@ cmake --build build-check --target e4_ui_preview
 ```
 
 The preview utility opens no MIDI devices and does not load/save standalone preferences. The original icon is embedded as binary image data in the shared standalone/plug-in header and graphical installer, in addition to the OS bundle icon.
+
+The component previews now show the compact 56-pixel header and taller keyboards (94 pixels in the plug-in, 122 in standalone). The live JPEG captures retain the published 0.1.0 layout.

@@ -93,16 +93,16 @@ public:
     void resized() override {
         const auto place = [this](juce::Component& c,int x,int y,int w,int h) { c.setBounds(e4::ui::bounds(x,y,w,h,getWidth(),getHeight(),false)); };
         title.setBounds(0,0,0,0);
-        place(panic,736,28,200,36); place(info,44,144,870,24);
-        place(channelLabel,44,179,220,18); place(channel,44,202,220,36);
-        place(mappingButton,770,202,146,36);
-        place(rootLabel,286,179,220,18); place(root,286,202,220,36);
-        place(transposeLabel,528,179,220,18); place(transpose,528,202,220,36);
-        place(bendLabel,44,265,100,22); place(bend,156,255,760,38);
-        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,440,209,78);
-        place(bankButton,656,404,260,28);
-        status.setBounds(0,0,0,0); place(voiceDisplay,676,569,240,22); place(keyboard,44,604,872,58);
-        place(scaleControls,44,318,872,52);
+        place(panic,736,10,200,36); place(info,44,108,870,24);
+        place(channelLabel,44,143,220,18); place(channel,44,166,220,36);
+        place(mappingButton,770,166,146,36);
+        place(rootLabel,286,143,220,18); place(root,286,166,220,36);
+        place(transposeLabel,528,143,220,18); place(transpose,528,166,220,36);
+        place(bendLabel,44,229,100,22); place(bend,156,219,760,38);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],44+i*221,404,209,78);
+        place(bankButton,656,368,260,28);
+        status.setBounds(0,0,0,0); place(voiceDisplay,676,533,240,22); place(keyboard,44,568,872,94);
+        place(scaleControls,44,282,872,52);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
     }
 

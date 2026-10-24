@@ -1,6 +1,6 @@
 # Installers and platform support
 
-The JUCE C++ sources can target macOS, Windows and Linux. Binaries and installers are platform-specific: AU is Apple-only; VST3 needs native builds for each OS and CPU architecture. Only macOS arm64 has currently been built and tested. Windows/Linux support is planned, not certified.
+The JUCE C++ sources can target macOS, Windows and Linux. Binaries and installers are platform-specific: AU is Apple-only; VST3 needs native builds for each OS and CPU architecture. Native macOS, Windows and Linux x64/ARM64 builds passed automated tests. Physical hardware and DAW acceptance outside the documented macOS checks remains pending.
 
 ## macOS
 
@@ -52,7 +52,7 @@ Packaging includes LICENSE.md, MIT/GPL-3.0 texts and THIRD_PARTY_NOTICES.md plus
 
 ## GitHub cross-platform previews
 
-`.github/workflows/release.yml` builds and tests six native architectures. A matching version tag creates a draft prerelease only after every job succeeds. The release remains a draft until its notarised Mac DMG has been added locally and its contents reviewed.
+`.github/workflows/release.yml` builds and tests six native architectures. A matching version tag creates a draft release only after every job succeeds. The release remains a draft until its notarised Mac DMG has been added locally and its contents reviewed.
 
 Windows and Linux use `scripts/package-portable.py`; each artifact includes standalone, VST3, the MIDI probe, studio fixtures, licences and corresponding source. Windows has a per-user PowerShell installation helper; Linux has a per-user shell installation helper. These packages are platform previews and do not imply completed hardware/host acceptance. Windows binaries are unsigned. Linux builds target Ubuntu 24.04 libraries. Linux has no Ableton Live version; test VST3 in a compatible native host.
 

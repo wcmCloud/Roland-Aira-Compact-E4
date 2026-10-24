@@ -75,7 +75,7 @@ jobs:
           merge-multiple: true
       - name: Keep unsigned Mac archives in Actions only
         run: find artifacts -name '*-macOS-*' -delete
-      - name: Create draft prerelease
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -83,5 +83,5 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" artifacts/* --clobber
           else
-            gh release create "$TAG" artifacts/* --draft --prerelease --title "E-4 Companion ${TAG#v}" --notes-file docs/RELEASE-NOTES.md
+            gh release create "$TAG" artifacts/* --draft --title "E-4 Companion ${TAG#v}" --notes-file docs/RELEASE-NOTES.md
           fi

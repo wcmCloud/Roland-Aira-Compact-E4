@@ -6,7 +6,7 @@
 
 **Play your E-4 vocoder from a keyboard, chord pads or Ableton Live. Shape the notes on your computer; hear the voice and effects on the hardware.**
 
-[![Preview](https://img.shields.io/badge/preview-0.1.0-C3EF78?style=for-the-badge)](#getting-started)
+[![Release](https://img.shields.io/badge/release-1.0.0-C3EF78?style=for-the-badge)](#getting-started)
 [![Platform](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-28323D?style=for-the-badge)](#platforms-and-formats)
 [![JUCE](https://img.shields.io/badge/JUCE-8.0.10-64DFCE?style=for-the-badge)](#build-from-source)
 [![Project licence](https://img.shields.io/badge/project%20licence-MIT%20or%20GPL--3.0-28323D?style=for-the-badge)](#licence)
@@ -73,7 +73,7 @@ Installer, standalone and settings images are captures of the running macOS wind
 
 ## Getting started
 
-Download the [**0.1.0 studio preview**](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases/tag/v0.1.0):
+Download the [**1.0.0 release**](https://github.com/wcmCloud/Roland-Aira-Compact-E4/releases/tag/v1.0.0):
 
 - **macOS Intel and Apple Silicon:** signed, Apple-notarised universal DMG with graphical installer, standalone, VST3 and AU.
 - **Windows x64 / ARM64:** unsigned portable ZIPs with standalone, VST3 and a per-user installation helper.
@@ -154,7 +154,7 @@ Four-note hardware playback was confirmed by the user. Audible bend, physical-co
 
 The workflow packages native standalone and VST3 builds with licence notices and corresponding JUCE sources. Windows ZIPs include an optional per-user `install.ps1`; Linux archives include `install.sh`. Windows builds are unsigned previews. CI macOS ZIPs remain unsigned development builds in Actions; use the locally signed and notarised DMG for normal Mac installation. Linux currently targets Ubuntu 24.04 or a compatible system with the documented build dependencies.
 
-To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft prerelease. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.
+To prepare a release, update the version in `CMakeLists.txt`, commit, and push the matching `vX.Y.Z` tag. All six builds must pass before GitHub creates a draft release. Add the locally signed/notarised Mac DMG and its checksum, review the release assets and notes, then publish. Apple signing credentials stay in the local Keychain. See [release notes](docs/RELEASE-NOTES.md) for installation and remaining studio checks.
 
 ## Build from source
 

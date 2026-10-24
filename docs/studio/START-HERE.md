@@ -1,6 +1,6 @@
 # E-4 Companion studio test kit
 
-Release preview 0.1.0 for Apple Silicon Macs. Bring the notarized DMG to the studio; this folder, the Live set and MIDI fixtures are included inside it. AU is included for other-host evaluation; use **VST3 in Ableton Live**.
+Release 1.0.0 includes a universal Mac installer for Intel/Apple Silicon and native Windows/Linux x64/ARM64 packages. Bring the notarized DMG to the studio; this folder, the Live set and MIDI fixtures are included inside it. AU is included for other-host evaluation; use **VST3 in Ableton Live**.
 
 ## Install and connect
 

@@ -252,24 +252,24 @@ public:
     void resized() override {
         const auto place = [this](juce::Component& c,int x,int y,int w,int h) { c.setBounds(e4::ui::bounds(x,y,w,h,getWidth(),getHeight(),true)); };
         title.setBounds(0,0,0,0);
-        place(panic,816,28,200,36);
-        place(refresh,200,115,74,28);
-        place(inputLabel,44,163,230,18); place(inputs,44,187,230,38);
-        place(outputLabel,44,243,230,18); place(outputs,44,267,230,38);
-        place(connect,44,319,112,28); place(disconnect,164,319,110,28);
-        place(clockEnable,44,426,230,28); place(tempo,44,466,230,40);
-        place(start,44,528,112,36); place(stop,164,528,110,36);
-        place(clockState,44,584,230,62);
-        place(help,334,146,658,28);
-        place(channelLabel,334,187,160,18); place(channel,334,211,160,36);
-        place(mappingButton,866,211,126,36);
-        place(rootLabel,514,187,160,18); place(root,514,211,160,36);
-        place(transposeLabel,694,187,160,18); place(transpose,694,211,160,36);
-        place(scaleControls,334,326,658,52);
-        place(bendLabel,334,278,90,20); place(bend,432,267,560,40);
-        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,468,154,78);
-        place(bankButton,732,425,260,28);
-        voices.setBounds(0,0,0,0); place(voiceDisplay,768,597,224,22); place(keyboard,334,634,658,86);
+        place(panic,816,10,200,36);
+        place(refresh,200,79,74,28);
+        place(inputLabel,44,127,230,18); place(inputs,44,151,230,38);
+        place(outputLabel,44,207,230,18); place(outputs,44,231,230,38);
+        place(connect,44,283,112,28); place(disconnect,164,283,110,28);
+        place(clockEnable,44,390,230,28); place(tempo,44,430,230,40);
+        place(start,44,492,112,36); place(stop,164,492,110,36);
+        place(clockState,44,548,230,62);
+        place(help,334,110,658,28);
+        place(channelLabel,334,151,160,18); place(channel,334,175,160,36);
+        place(mappingButton,866,175,126,36);
+        place(rootLabel,514,151,160,18); place(root,514,175,160,36);
+        place(transposeLabel,694,151,160,18); place(transpose,694,175,160,36);
+        place(scaleControls,334,290,658,52);
+        place(bendLabel,334,242,90,20); place(bend,432,231,560,40);
+        for (int i = 0; i < 4; ++i) place(pads[static_cast<std::size_t>(i)],334+i*168,432,154,78);
+        place(bankButton,732,389,260,28);
+        voices.setBounds(0,0,0,0); place(voiceDisplay,768,561,224,22); place(keyboard,334,598,658,122);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth())/29.0f);
         place(status,44,771,952,38);
     }
@@ -504,7 +504,7 @@ private:
 class App final : public juce::JUCEApplication {
 public:
     const juce::String getApplicationName() override { return "E-4 Companion"; }
-    const juce::String getApplicationVersion() override { return "0.1.0"; }
+    const juce::String getApplicationVersion() override { return "1.0.0"; }
     bool moreThanOneInstanceAllowed() override { return false; }
     void initialise(const juce::String&) override { window = std::make_unique<Window>([] { quit(); }); }
     void shutdown() override { window.reset(); }
