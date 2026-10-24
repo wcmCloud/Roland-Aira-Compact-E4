@@ -152,6 +152,25 @@ int main() {
     if (auto xml = badTranspose.createXml()) juce::AudioProcessor::copyXmlToBinary(*xml,oldState);
     saved.setStateInformation(oldState.getData(),static_cast<int>(oldState.getSize()));
     check(static_cast<int>(saved.parameters.getRawParameterValue("transpose")->load()) == 0,"out-of-range transpose state is rejected");
+    E4Processor rejectionProcessor;
+    rejectionProcessor.prepareToPlay(48000,128);
+    midi.clear(); rejectionProcessor.processBlock(audio,midi);
+    midi.clear();
+    for (int note = 60; note < 65; ++note)
+        midi.addEvent(juce::MidiMessage::noteOn(1,note,static_cast<juce::uint8>(100)),0);
+    rejectionProcessor.processBlock(audio,midi);
+    check(rejectionProcessor.activeVoices() == 4,"processor tracks four accepted voices");
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOff(1,60),0);
+    midi.addEvent(juce::MidiMessage::noteOn(1,64,static_cast<juce::uint8>(100)),1);
+    rejectionProcessor.processBlock(audio,midi);
+    check(midi.getNumEvents() == 1 && (*midi.begin()).getMessage().isNoteOff(),
+          "rejected fifth-note repeat cannot be prematurely accepted across blocks");
+    midi.clear(); midi.addEvent(juce::MidiMessage::noteOff(1,64),0);
+    midi.addEvent(juce::MidiMessage::noteOff(1,64),1);
+    midi.addEvent(juce::MidiMessage::noteOn(1,64,static_cast<juce::uint8>(100)),2);
+    rejectionProcessor.processBlock(audio,midi);
+    check(midi.getNumEvents() == 1 && (*midi.begin()).getMessage().isNoteOn()
+        && (*midi.begin()).samplePosition == 2,"fresh fifth pitch works after full release");
     std::cout << "Processor integration: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

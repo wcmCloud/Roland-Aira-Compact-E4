@@ -53,6 +53,12 @@ target_link_libraries(e4_midi_probe PRIVATE juce::juce_audio_devices juce::juce_
 target_compile_definitions(e4_midi_probe PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 
 if(BUILD_TESTING)
+    juce_add_console_app(e4_vst3_check PRODUCT_NAME "E4 VST3 Check")
+    target_sources(e4_vst3_check PRIVATE Tools/Vst3Check.cpp)
+    target_link_libraries(e4_vst3_check PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags)
+    target_compile_definitions(e4_vst3_check PRIVATE JUCE_PLUGINHOST_VST3=1 JUCE_PLUGINHOST_AU=0 JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+    add_dependencies(e4_vst3_check AiraE4_VST3)
+    add_test(NAME e4_vst3_wrapper_check COMMAND e4_vst3_check "${CMAKE_BINARY_DIR}/AiraE4_artefacts/$<CONFIG>/VST3/E-4 Companion.vst3")
     add_test(NAME e4_midi_probe_help COMMAND e4_midi_probe --help)
     add_test(NAME e4_midi_probe_invalid_duration COMMAND e4_midi_probe --capture unused --seconds invalid)
     set_tests_properties(e4_midi_probe_invalid_duration PROPERTIES WILL_FAIL TRUE)

@@ -39,7 +39,7 @@ Record before testing: date, E-4 firmware, macOS and Live versions, USB/DIN rout
 
 ## AU and release gates
 
-The AU builds but does not yet have a supported direct MIDI-output path in Live. Do not mark AU performance acceptance complete merely because scanning succeeds. AU validation, VST3 validation, native UI inspection, clock timing measurements, signing/notarisation and cross-app endpoint ownership remain separate release gates.
+The AU builds but does not yet have a supported direct MIDI-output path in Live. Do not mark AU performance acceptance complete merely because scanning succeeds. AU validation, the Steinberg VST3 validator, native UI inspection, clock timing measurements, signing/notarisation and cross-app endpoint ownership remain separate release gates.
 
 ## Result log
 
@@ -52,3 +52,5 @@ The AU builds but does not yet have a supported direct MIDI-output path in Live.
 | Live editor-close / transport | Pending | NOT RUN | |
 | State persistence/migration | Pending | NOT RUN |
 | Standalone clock timing/transport | Pending | NOT RUN | |
+
+Software-only progress: JUCE VST3 discovery/load and the 24 wrapper checks passed. See [wrapper results](validation/vst3-wrapper-2026-10-24.json). The hardware result rows above remain unchanged.

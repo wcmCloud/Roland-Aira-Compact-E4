@@ -14,6 +14,7 @@ public:
         emit(0xe0 | (channel - 1), 0, 64);
         voices.fill(0);
         for (auto& input : held) input.fill(0);
+        for (auto& input : rejected) input.fill(0);
         active = 0;
     }
     template <typename Emit> void setChannel(int next, Emit&& emit) noexcept {
@@ -35,13 +36,21 @@ public:
         const int outputNote = data1 + transpose;
         if (outputNote < 0 || outputNote > 127) return; // Reject, do not clamp distinct notes together.
         auto& owner = held[static_cast<std::size_t>((status & 15) + source * 16)][static_cast<std::size_t>(data1)];
+        auto& ignored = rejected[static_cast<std::size_t>((status & 15) + source * 16)][static_cast<std::size_t>(data1)];
         auto& references = voices[static_cast<std::size_t>(outputNote)];
         if (kind == 0x90 && data2 != 0) {
-            // Reject a fifth distinct note; never steal another source's release.
-            if (references == 0 && active == maxVoices) return;
-            if (owner == UINT16_MAX) return;
+            // Keep rejected input holds until their releases drain. Otherwise a
+            // late release from a fifth voice can silence a later accepted press.
+            if (ignored != 0 || (references == 0 && active == maxVoices)) {
+                if (ignored == UINT16_MAX) panic(emit);
+                else ++ignored;
+                return;
+            }
+            if (owner == UINT16_MAX) { panic(emit); return; }
             ++owner;
             if (references++ == 0) { ++active; emit(0x90 | (channel - 1), outputNote, data2); }
+        } else if (ignored != 0) {
+            --ignored;
         } else if (owner != 0) {
             --owner;
             if (--references == 0) { --active; emit(0x80 | (channel - 1), outputNote, data2); }
@@ -52,6 +61,7 @@ public:
         for (int inputChannel = 0; inputChannel < 16; ++inputChannel)
             for (int note = 0; note < 128; ++note) {
                 auto& owner = held[static_cast<std::size_t>(source * 16 + inputChannel)][static_cast<std::size_t>(note)];
+                rejected[static_cast<std::size_t>(source * 16 + inputChannel)][static_cast<std::size_t>(note)] = 0;
                 if (owner == 0) continue;
                 const int outputNote = note + transpose; // Only in-range input notes can be owned.
                 auto& references = voices[static_cast<std::size_t>(outputNote)];
@@ -65,6 +75,7 @@ public:
     int outputChannel() const noexcept { return channel; }
 private:
     std::array<std::array<std::uint16_t, 128>, 96> held {};
+    std::array<std::array<std::uint16_t, 128>, 96> rejected {};
     std::array<std::uint32_t, 128> voices {};
     int channel = defaultChannel;
     int active = 0;

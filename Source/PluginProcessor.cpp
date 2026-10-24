@@ -65,7 +65,7 @@ private:
     void timerCallback() override {
         juce::MidiBuffer unused; keys.processNextMidiBuffer(unused,0,1,false);
         status.setText("Active voices: " + juce::String(owner.activeVoices())
-            + " / 4 — clips, keyboard and pads share this limit",juce::dontSendNotification);
+            + juce::String::fromUTF8(" / 4 — clips, keyboard and pads share this limit"),juce::dontSendNotification);
     }
     E4Processor& owner;
     juce::MidiKeyboardState keys;

@@ -191,6 +191,35 @@ int main() {
     check(events.empty() && transposed.semitoneOffset() == -12,"invalid transpose setting ignored");
     transposed.process(0xe0,127,127,emit);
     check(events == std::vector<Event>{{0xe2,127,127}},"transpose does not alter pitch bend encoding");
+    e4::MidiEngine rejectedNotes;
+    for (int note = 60; note < 64; ++note) rejectedNotes.process(0x90,note,100,emit);
+    rejectedNotes.process(0x90,64,100,emit); // Fifth voice: rejected but still held by input.
+    rejectedNotes.process(0x80,60,0,emit);
+    events.clear();
+    rejectedNotes.process(0x90,64,100,emit); // Repeated press before the rejected one was released.
+    check(events.empty(),"rejected input cannot retrigger until its outstanding releases drain");
+    rejectedNotes.process(0x80,64,0,emit);
+    rejectedNotes.process(0x80,64,0,emit);
+    rejectedNotes.process(0x90,64,100,emit);
+    check(events == std::vector<Event>{{0x92,64,100}},"fresh press works after rejected holds release");
+    rejectedNotes.process(0x80,64,0,emit);
+    check(events.back() == Event{0x82,64,0},"rejected history does not steal a fresh note release");
+    rejectedNotes.panic(emit);
+    for (int note = 60; note < 64; ++note) rejectedNotes.process(0x90,note,100,emit);
+    rejectedNotes.process(0x90,64,100,emit,1);
+    rejectedNotes.process(0x80,60,0,emit);
+    rejectedNotes.releaseSource(1,emit);
+    events.clear();
+    rejectedNotes.process(0x90,64,100,emit,1);
+    check(events == std::vector<Event>{{0x92,64,100}},"source cleanup clears outstanding rejected UI holds");
+    rejectedNotes.panic(emit);
+    events.clear();
+    for (int count = 0; count < 65536; ++count) rejectedNotes.process(0x90,60,100,emit);
+    check(rejectedNotes.activeVoices() == 0 && events.back() == Event{0xe2,0,64},
+          "ownership counter saturation performs fail-closed cleanup");
+    for (int note = 60; note < 64; ++note) rejectedNotes.process(0x90,note,100,emit);
+    for (int count = 0; count < 65536; ++count) rejectedNotes.process(0x90,64,100,emit);
+    check(rejectedNotes.activeVoices() == 0,"rejected counter saturation also cleans up held notes");
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

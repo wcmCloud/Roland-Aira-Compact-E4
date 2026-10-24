@@ -11,7 +11,7 @@ JUCE C++17 starter for a Roland AIRA E-4 hardware companion: VST3, AU and Standa
 First implementation of the shared MIDI engine and plug-in interface:
 
 - Maps incoming notes and pitch bend to the selected channel (default 3).
-- Allows four distinct notes; rejects a fifth until a voice is released.
+- Allows four distinct notes. A rejected fifth-note hold must be fully released before that same input pitch can be accepted again; this prevents a late release from cutting off a newer press. Other sources remain independent.
 - Counts repeated notes and overlapping input-channel ownership so one release cannot silence another held source.
 - Filters unsupported messages without discarding valid releases in the same block. Incoming clock/transport bytes are deliberately dropped: use Live's port Sync in plug-in workflows. Standalone has an optional internal clock master.
 - Panic sends explicit Note Offs for owned notes and centres bend. Channel changes, host stop transitions, state restore and bypass also clean up owned notes.
@@ -93,7 +93,7 @@ Prerequisites: Xcode command line tools, CMake 3.22+ and a JUCE checkout. These 
 ```sh
 cd "/Users/chris/Documents/GitHub/Aira E4"
 cmake -S . -B build -G Xcode -DJUCE_SOURCE_DIR="/absolute/path/to/JUCE"
-cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests
+cmake --build build --config Debug --target AiraE4_VST3 AiraE4_AU AiraE4_Standalone e4_core_tests e4_processor_tests e4_clock_tests e4_vst3_check
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
@@ -115,11 +115,22 @@ clang++ -std=c++17 -Wall -Wextra -Werror -ISource Tests/CoreTests.cpp -o build-c
 ./build-core/e4_core_tests
 ```
 
+## VST3 wrapper validation
+
+The software-host check loads the built VST3 bundle without installing it or opening MIDI/audio hardware:
+
+```sh
+cmake --build build-check --target e4_vst3_check
+ctest --test-dir build-check -R e4_vst3_wrapper_check --output-on-failure
+```
+
+It verifies note output/sample offsets across 44.1/48/96 kHz and 32/64/128/512/1024-sample blocks, silent audio, CC filtering, pitch bend, host transpose automation and state round-trip without note replay. [Saved results](docs/validation/vst3-wrapper-2026-10-24.json) pass all 24 checks. This JUCE-host test does not replace Ableton acceptance, Steinberg's validator, AU validation or physical hardware testing.
+
 ## Verification
 
 Core tests cover ownership, limits, filtering/release interactions, channel cleanup, note/bend boundaries, panic and 1000 stress cycles. A second test target exercises the actual JUCE processor: sample offsets, filtering, state round-trip, invalid state, bypass and overload cleanup. Run all three with CTest after building `e4_core_tests`, `e4_processor_tests` and `e4_clock_tests`.
 
-VST3, AU and standalone Debug builds pass in `build-check`; all five CTest checks pass (three suites plus diagnostic help/invalid-argument checks). The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
+VST3, AU and standalone Debug builds pass in `build-check`; all six CTest checks pass (core, clock, processor, VST3 wrapper, diagnostic help and invalid-argument checks). The built app is `build-check/AiraE4_artefacts/Debug/Standalone/E-4 Companion.app`.
 
 Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on Apple clang 21, arm64. Read-only E-4 discovery and incoming clock capture passed. Outgoing hardware and DAW integration remain untested. See PLAN.md for the current milestone status.
 

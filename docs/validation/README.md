@@ -15,3 +15,9 @@ These are local receive-callback arrival times. They include USB/CoreMIDI/OS sch
 The first sandboxed discovery attempt returned no endpoints because CoreMIDI access was restricted. Running with access to the Mac MIDI service succeeded; empty arrays alone do not prove the E-4 is disconnected.
 
 Raw records: [port inventory](midi-ports-2026-10-24.json) and [five-second receive capture](e4-receive-2026-10-24.json). IDs are local endpoint identifiers and can change after reconnecting/reconfiguration.
+
+## VST3 software-host validation
+
+The actual Debug VST3 was discovered and loaded in a JUCE software host. All 24 checks passed, including note sample offsets across 15 sample-rate/buffer combinations, CC filtering, bend, host transpose automation and state round-trip without note replay. See [the wrapper report](vst3-wrapper-2026-10-24.json).
+
+This test opened no audio or MIDI device and transmitted no hardware messages. It is not a substitute for Ableton, the Steinberg validator or AU validation.

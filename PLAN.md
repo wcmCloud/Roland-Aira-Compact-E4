@@ -4,6 +4,10 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 
 ## Implementation progress
 
+- Hardened rejected-note bookkeeping: repeated presses of a rejected fifth voice remain blocked until that input's outstanding releases drain. Source cleanup clears rejected history, and counter saturation triggers panic rather than losing ownership. Core/processor regressions reproduce and verify the fix.
+- Added VST3 software-host validation that discovers and loads the actual bundle, checks notes at 15 sample-rate/buffer combinations, pitch bend, CC filtering, automation and state round-trip. All 24 wrapper checks and all six CTest checks pass. Results are saved under docs/validation; Ableton, Steinberg/AU validation and outgoing hardware acceptance remain pending.
+- Fixed UTF-8 decoding for the bullet/dash labels in both interfaces; all formats rebuilt.
+
 - Added receive-only MIDI diagnostics (JSON port inventory and bounded input captures with online clock statistics), plus a Debug launcher that can build/open the app or run under LLDB. Build-only is verified; interactive debugger attachment remains pending.
 - Physical receive-path check on 24 October: discovered E-4 MIDI IN/OUT and captured 260 incoming clock pulses over five seconds at approximately 130 BPM. Raw results and limitations are saved under docs/validation. No MIDI output was opened or messages sent; outgoing notes, looper sync, audio return and Ableton acceptance remain open.
 
@@ -28,7 +32,7 @@ Status: standalone internal clock and transport implemented, 24 October 2026. Ta
 - Shared fixed-storage MIDI engine is integrated with the JUCE processor. Implemented: output channel, four distinct voices, repeated-note/input-channel ownership, velocity-zero releases, raw pitch bend, unsupported-message filtering, owned-note panic and channel-change cleanup.
 - Plug-in state saves channel, chord root and transpose. MIDI bend and note gestures are transient, not restored.
 - Host stop transitions and bypass release notes. Input bursts are bounded at 2048 events/block; overload triggers cleanup. Plug-in clock is intentionally delegated to Live port Sync. Standalone can generate an opt-in internal clock master; incoming clocks are not forwarded.
-- Verification: VST3, AU and standalone Debug builds pass on arm64 in `build-check`; all three CTest suites pass. Core tests also pass under AddressSanitizer/UndefinedBehaviorSanitizer. No host scan or outgoing hardware test has run; read-only discovery and incoming clock capture passed.
+- Verification: VST3, AU and standalone Debug builds pass on arm64 in `build-check`; all three CTest suites pass. Core tests also pass under AddressSanitizer/UndefinedBehaviorSanitizer. JUCE VST3 discovery/load and processing checks pass. Ableton scan and outgoing hardware tests remain pending; read-only discovery and incoming clock capture passed.
 - Core regression tests and processor integration tests have been added. Full hardware test M1 remains open; M2 now has keyboard/chord performance controls in both interfaces. Preset/chord customisation and hardware/host acceptance remain open. M3 has its first MIDI-only workflow; physical hotplug, sleep and endpoint tests remain open.
 - Xcode build/refresh remains unverified in this automated session: module-cache writing and JUCE helper compiler discovery failed. The separate Makefiles build succeeds; existing Xcode project files were preserved.
 - CMake and JUCE are now installed/available locally. The CMake project now explicitly enables C as well as C++ for JUCE's VST3 helper.

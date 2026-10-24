@@ -1,0 +1,104 @@
+{
+  "plugin": "E-4 Companion",
+  "format": "VST3",
+  "failures": 0,
+  "checks": [
+    {
+      "check": "VST3 note input/output preserves sample offsets",
+      "passed": true
+    },
+    {
+      "check": "unsupported CC is filtered through wrapper",
+      "passed": true
+    },
+    {
+      "check": "instrument audio output is silent",
+      "passed": true
+    },
+    {
+      "check": "VST3 pitch bend survives both wrapper directions",
+      "passed": true
+    },
+    {
+      "check": "note timing at 44100 Hz / 32 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 44100 Hz / 64 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 44100 Hz / 128 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 44100 Hz / 512 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 44100 Hz / 1024 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 48000 Hz / 32 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 48000 Hz / 64 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 48000 Hz / 128 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 48000 Hz / 512 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 48000 Hz / 1024 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 96000 Hz / 32 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 96000 Hz / 64 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 96000 Hz / 128 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 96000 Hz / 512 samples",
+      "passed": true
+    },
+    {
+      "check": "note timing at 96000 Hz / 1024 samples",
+      "passed": true
+    },
+    {
+      "check": "transpose parameter exposed to host",
+      "passed": true
+    },
+    {
+      "check": "host transpose automation changes actual VST3 output",
+      "passed": true
+    },
+    {
+      "check": "transposed VST3 note releases at actual output pitch",
+      "passed": true
+    },
+    {
+      "check": "VST3 state restore does not replay notes",
+      "passed": true
+    },
+    {
+      "check": "VST3 state round-trip restores transpose",
+      "passed": true
+    }
+  ],
+  "scope": "JUCE software host smoke test; not Ableton, Steinberg validator or E-4 hardware acceptance"
+}

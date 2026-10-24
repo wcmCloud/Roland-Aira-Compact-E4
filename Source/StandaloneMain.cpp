@@ -91,7 +91,7 @@ public:
         options.osxLibrarySubFolder = "Application Support";
         preferences.setStorageParameters(options);
         auto* settings = preferences.getUserSettings();
-        title.setText("E-4 Companion • Standalone", juce::dontSendNotification);
+        title.setText(juce::String::fromUTF8("E-4 Companion • Standalone"), juce::dontSendNotification);
         help.setText("Enable VOCODER + KEY IN + HARMONY on the E-4. Match its MIDI channel.\n"
                      "Choose a MIDI output and press Connect. Audio stays on the hardware.\n"
                      "Keep internal clock off when Live or another device is the clock master.", juce::dontSendNotification);
@@ -350,10 +350,10 @@ private:
         if (sink) sink->heartbeat();
         start.setEnabled(sink != nullptr && clockEnable.getToggleState() && !sink->clockRunning());
         stop.setEnabled(sink != nullptr);
-        clockState.setText(sink && sink->clockRunning() ? "Clock: internal master running (24 PPQN)" : "Clock: stopped — incoming clock is not forwarded",juce::dontSendNotification);
+        clockState.setText(sink && sink->clockRunning() ? "Clock: internal master running (24 PPQN)" : juce::String::fromUTF8("Clock: stopped — incoming clock is not forwarded"),juce::dontSendNotification);
         juce::MidiBuffer unused;
         keys.processNextMidiBuffer(unused,0,1,false); // Clear keyboard's indirect-event history.
-        voices.setText("Active voices: " + juce::String(session.activeVoices()) + " / 4 — keyboard and pads share this limit",juce::dontSendNotification);
+        voices.setText("Active voices: " + juce::String(session.activeVoices()) + juce::String::fromUTF8(" / 4 — keyboard and pads share this limit"),juce::dontSendNotification);
         if (++polls == 200) { polls = 0; refreshPorts(); }
     }
     juce::ApplicationProperties preferences;
