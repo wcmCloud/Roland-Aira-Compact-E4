@@ -1,5 +1,6 @@
 #pragma once
 #include "MidiPolicy.h"
+#include "PerformanceSettings.h"
 #include <array>
 #include <cstdint>
 
@@ -30,7 +31,7 @@ public:
     }
     template <typename Emit> void process(int status, int data1, int data2, Emit&& emit, int source = 0) noexcept {
         if (status < 0x80 || status > 0xef || data1 < 0 || data1 > 127
-            || data2 < 0 || data2 > 127 || source < 0 || source > 5) return;
+            || data2 < 0 || data2 > 127 || source < 0 || source >= e4::source::count) return;
         const int kind = status & 0xf0;
         if (kind == 0xe0) { emit(0xe0 | (channel - 1), data1, data2); return; }
         if (kind != 0x80 && kind != 0x90) return;
@@ -62,7 +63,7 @@ public:
         }
     }
     template <typename Emit> void releaseSource(int source, Emit&& emit) noexcept {
-        if (source < 0 || source > 5) return;
+        if (source < 0 || source >= e4::source::count) return;
         for (int inputChannel = 0; inputChannel < 16; ++inputChannel)
             for (int note = 0; note < 128; ++note) {
                 auto& owner = held[static_cast<std::size_t>(source * 16 + inputChannel)][static_cast<std::size_t>(note)];
@@ -84,8 +85,8 @@ private:
     void reject(Rejection reason) noexcept { rejection = reason; ++rejectionSerial; }
     Rejection rejection = Rejection::none;
     std::uint32_t rejectionSerial = 0;
-    std::array<std::array<std::uint16_t, 128>, 96> held {};
-    std::array<std::array<std::uint16_t, 128>, 96> rejected {};
+    std::array<std::array<std::uint16_t, 128>, e4::source::count * 16> held {};
+    std::array<std::array<std::uint16_t, 128>, e4::source::count * 16> rejected {};
     std::array<std::uint32_t, 128> voices {};
     int channel = defaultChannel;
     int active = 0;

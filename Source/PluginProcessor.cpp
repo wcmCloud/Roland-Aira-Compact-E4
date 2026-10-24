@@ -143,7 +143,7 @@ void E4Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer
             if (!channelChanged && !transposeChanged) engine.panic(emit);
         }
         else {
-            for (int source = 1; source <= 5; ++source) engine.releaseSource(source,emit);
+            for (int source = 1; source < e4::source::arpeggiator; ++source) engine.releaseSource(source,emit);
             emit(0xe0 | (engine.outputChannel()-1),0,64);
         }
     }

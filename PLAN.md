@@ -1,5 +1,13 @@
 # E-4 Companion — implementation plan
 
+
+### Performance expansion: P0 foundation increment (24 October 2026)
+
+- Added shared fixed-size chord settings and a strict version-1 app-preset codec; factory chord playback now reads the shared model in both interfaces. Existing plug-in state remains schema 3.
+- Expanded stable note ownership to include reserved arpeggiator/sequencer sources, retaining IDs 0–5 and the shared four-voice policy. Tested independent cancellation, overlapping owners and rejected-hold recovery.
+- Documented processing/publication rules in docs/architecture/PERFORMANCE.md. Editable banks, file controls, embedding and bounded runtime snapshot publication are the next P1 integration work; no new controls are exposed yet.
+- Debug standalone, AU and VST3 rebuilt; all seven CTest checks pass, plus the core suite under AddressSanitizer/UndefinedBehaviorSanitizer. Hardware and Live acceptance remain open.
+
 Status: standalone internal clock and transport implemented, 24 October 2026. Target: macOS VST3, AU and standalone using JUCE/C++17. Hardware/host validation is still pending.
 
 ## Implementation progress

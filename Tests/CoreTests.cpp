@@ -258,6 +258,56 @@ int main() {
     check(inputDisplay.isDown(0) && inputDisplay.isDown(127),"non-note input does not alter highlights");
     inputDisplay.clear();
     check(inputDisplay.low() == 0 && inputDisplay.high() == 0,"panic/disconnect clears incoming highlights");
+    e4::PerformanceSettings settings;
+    e4::PerformancePreset::Bytes preset {};
+    check(settings.valid() && e4::PerformancePreset::encode(settings,preset),"factory settings encode");
+    auto custom = settings;
+    custom.pads[0].offsets = {{-12,0,7,12}}; custom.pads[0].noteCount=4;
+    custom.pads[0].inversion=2; custom.pads[0].octave=-1;
+    check(e4::PerformancePreset::encode(custom,preset),"custom settings encode");
+    e4::PerformanceSettings restored;
+    check(e4::PerformancePreset::decode(preset.data(),preset.size(),restored)
+        && restored.pads[0].offsets == custom.pads[0].offsets && restored.pads[0].inversion == 2
+        && restored.pads[0].octave == -1,"preset round-trip preserves voicing");
+    e4::PerformancePreset::Bytes roundTrip {};
+    check(e4::PerformancePreset::encode(restored,roundTrip) && roundTrip == preset,"preset encoding is canonical");
+    for (std::size_t length=0; length<preset.size(); ++length)
+        check(!e4::PerformancePreset::decode(preset.data(),length,restored),"truncated preset rejected");
+    const auto validPreset=preset;
+    for (int version : {0,2,255}) {
+        preset=validPreset; preset[4]=static_cast<std::uint8_t>(version);
+        check(!e4::PerformancePreset::decode(preset.data(),preset.size(),restored),"unknown preset version rejected");
+    }
+    for (std::size_t field : {std::size_t{0},std::size_t{5},std::size_t{29},std::size_t{30},std::size_t{31},std::size_t{32},std::size_t{33}}) {
+        preset=validPreset; preset[field]=255;
+        check(!e4::PerformancePreset::decode(preset.data(),preset.size(),restored),"malformed preset field rejected");
+        check(e4::PerformancePreset::encode(restored,roundTrip) && roundTrip == validPreset,"failed import leaves current settings intact");
+    }
+    check(!e4::PerformancePreset::decode(nullptr,e4::PerformancePreset::size,restored),"null preset rejected");
+    custom.pads[0].offsets[1]=custom.pads[0].offsets[0];
+    preset=validPreset;
+    check(!e4::PerformancePreset::encode(custom,preset) && preset == validPreset,"duplicate pitches rejected without replacing encoded preset");
+    e4::MidiEngine generated;
+    events.clear();
+    for (int owner=0; owner<e4::source::count; ++owner) generated.process(0x90,60,100,emit,owner);
+    check(events == std::vector<Event>{{0x92,60,100}},"all performance sources share one physical voice");
+    for (int owner=1; owner<e4::source::count; ++owner) generated.releaseSource(owner,emit);
+    check(events.size() == 1 && generated.activeVoices() == 1,"generator cleanup preserves input owner");
+    generated.releaseSource(e4::source::input,emit);
+    check(events.back() == Event{0x82,60,0} && generated.activeVoices() == 0,"last input owner releases generated overlap");
+    events.clear();
+    generated.process(0x90,60,100,emit,e4::source::count);
+    generated.releaseSource(-1,emit);
+    check(events.empty(),"invalid source IDs are ignored");
+    for (int note=60; note<64; ++note) generated.process(0x90,note,100,emit,e4::source::arpeggiator);
+    generated.process(0x90,64,100,emit,e4::source::sequencer);
+    check(generated.activeVoices() == 4,"generators obey shared four-voice limit");
+    generated.releaseSource(e4::source::arpeggiator,emit);
+    generated.releaseSource(e4::source::sequencer,emit);
+    events.clear();
+    generated.process(0x90,64,100,emit,e4::source::sequencer);
+    check(events == std::vector<Event>{{0x92,64,100}},"generator cancellation clears rejected holds");
+    generated.panic(emit);
     std::cout << "MIDI engine: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

@@ -156,3 +156,7 @@ Core tests also pass with AddressSanitizer and UndefinedBehaviorSanitizer on App
 The automated Xcode build encountered a module-cache write error in this session; a later Xcode refresh also failed during JUCE helper compiler discovery. The successful verification used a separate Makefiles build, preserving the existing Xcode project. To refresh Xcode from your own Terminal, run the CMake configuration command above with the local JUCE path. The already built standalone app in `build-check` is available independently of that refresh.
 
 Manual acceptance steps are in [docs/HARDWARE_TESTS.md](docs/HARDWARE_TESTS.md). These checks have not yet been performed on an E-4 or in Ableton.
+
+## Performance expansion
+
+The first foundation increment adds shared chord settings, validated versioned preset data and independent ownership for future note generators. Factory performance remains unchanged; editable banks and import/export controls are next. See [the implementation roadmap](PLAN.md) and [the shared performance contract](docs/architecture/PERFORMANCE.md).
